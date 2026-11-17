@@ -4005,6 +4005,569 @@ window.COSM=window.COSM||{fronts:[],backs:[],burns:[],pets:[],emotes:[],tableArt
     twk(P,2,22,W,'#fffbd8');twk(P,15,22,W,'#fffbd8');
   }});
 })();
+/* =========================================================================
+   LOCKOUT CALL EFFECTS (17 Nov 2026, Fable): 12 effects that play over the table when someone calls LOCKOUT.
+   They replace the home tables as battle pass rewards (kind 'call'). Contract: COSM.calls rows
+   {id, name, rarity, src, sfx, sfxPrompt, thumb(), play(x, y, o)}; x, y = the caller's portrait centre on the
+   420 x 820 stage, o = {mine, name}. play() puts one .lc box in #fx (no taps) and removes it after 1.6 s.
+   Everything is drawn lazily with the game's sprite() painter and animated with CSS transforms and opacity only
+   (iPhone Safari is the target). The LOCKOUT! banner sits at y 330-430: every effect keeps that band readable.
+   window.__lcKeep (tests only) keeps the box so a paused frame can be photographed.
+   ========================================================================= */
+window.COSM=window.COSM||{fronts:[],backs:[],burns:[],pets:[],emotes:[],tableArt:{}};
+(function(){
+  const C=window.COSM;C.calls=C.calls||[];
+  const K=typeof INK==='string'?INK:'#1a1030';
+  const W='#fffaf0',RD='#ea4a3c',RDD='#a82a2a',OR='#ff8a2a',Y='#ffc21a',YL='#fff3a0',YD='#d98a00',
+        ST='#9a98b0',STD='#5a5870',STX='#35334a',STL='#d0cee0',
+        WD='#a8703a',WDL='#c98a4a',WDD='#6a4420',
+        GN='#6fd13c',GNL='#9ae86a',GND='#3f9a2a',
+        RK='#7a7892',RKL='#a5a3bd',RKD='#4a4862',PK='#ff9ab0',BL='#5ab4f2',BLL='#aee0ff';
+  const cache={};
+  const spr=(k,w,h,fn,ol)=>{try{return cache[k]||(cache[k]=sprite(w,h,fn,ol!==false))}catch(e){return ''}};
+  const rnd=(a,b)=>a+Math.random()*(b-a);
+  const px=n=>Math.round(n)+'px';
+  /* a block lit top-left: base, a lighter top row and left column, a darker bottom row and right column */
+  const blk=(P,x,y,w,h,b,l,d)=>{P.r(x,y,w,h,b);P.r(x,y,w,1,l);P.r(x,y,1,h,l);P.r(x,y+h-1,w,1,d);P.r(x+w-1,y,1,h,d)};
+
+  /* ------------------------------------------------------------------ sprites */
+  const ART={
+    /* padlock */
+    lockbody:[20,18,P=>{blk(P,0,0,20,18,Y,YL,YD);[[0,0],[19,0],[0,17],[19,17]].forEach(q=>P.p(q[0],q[1],null));P.r(1,0,18,1,YL);P.r(0,1,1,16,YL);P.r(2,2,16,1,'#ffd84a');
+      P.e(10,7,2.6,2.6,K);P.r(9,8,2,6,K);P.p(8,13,K);P.p(11,13,K)}],
+    shackle:[14,14,P=>{P.r(0,5,3,9,ST);P.r(11,5,3,9,ST);P.r(2,1,10,3,ST);P.r(0,3,3,3,ST);P.r(11,3,3,3,ST);P.r(3,1,8,1,STL);P.r(0,5,1,9,STL);P.r(13,5,1,9,STD);P.r(2,3,10,1,STD);P.p(0,13,STD);P.p(11,13,STD)}],
+    key:[13,7,P=>{P.e(3,3.5,3,3,YD);P.e(3,3.5,1.5,1.5,null);P.r(6,3,7,2,Y);P.r(9,5,1,2,Y);P.r(11,5,1,2,Y);P.r(6,3,7,1,YL)}],
+    /* gavel */
+    gavel:[30,14,P=>{blk(P,0,0,11,14,WDL,'#e0a860',WD);P.r(0,0,11,2,'#e0a860');P.r(9,0,2,14,WDD);P.r(11,5,19,4,WD);P.r(11,5,19,1,WDL);P.r(11,8,19,1,WDD);P.r(26,4,4,6,WDD);P.r(26,4,4,1,WD)}],
+    block:[20,8,P=>{blk(P,0,0,20,8,WD,WDL,WDD);P.r(2,2,16,1,WDL)}],
+    block2:[20,8,P=>{blk(P,0,0,20,8,WD,WDL,WDD);P.r(2,2,16,1,WDL);P.p(9,0,K);P.p(10,1,K);P.p(9,2,K);P.p(10,3,K);P.p(9,4,K);P.p(8,5,K);P.p(9,6,K);P.p(10,7,K);P.p(4,7,K);P.p(15,6,K)}],
+    wig:[14,10,P=>{P.e(7,4,7,4,W);P.r(0,4,3,6,W);P.r(11,4,3,6,W);P.r(0,8,3,2,'#d9d0c0');P.r(11,8,3,2,'#d9d0c0');P.r(3,6,8,2,'#e8dcc0')}],
+    /* rubber stamp */
+    stamp:[22,24,P=>{P.e(11,5,5,5,WDL);P.r(6,5,10,4,WDL);P.r(7,1,8,1,'#e0a860');P.r(6,8,10,1,WD);P.r(9,9,4,6,WD);P.r(9,9,1,6,WDL);blk(P,1,15,20,7,RD,'#ff7a6a',RDD);P.r(1,21,20,2,'#5a1a1a');P.r(1,20,20,1,RDD)}],
+    mark:[28,28,P=>{const R='rgba(234,74,60,.92)';P.e(14,14,13.5,13.5,R);P.e(14,14,10.5,10.5,null);P.r(9,13,10,9,R);P.r(10,8,8,2,R);P.r(10,10,2,4,R);P.r(16,10,2,4,R);P.r(13,16,2,3,null);P.p(13,15,null);P.p(14,15,null);P.p(22,25,R);P.p(25,21,R);P.p(3,6,R)},false],
+    splat:[7,7,P=>{P.e(3.5,3.5,3,3,RD);P.p(0,1,RD);P.p(6,5,RD)},false],
+    /* the velvet rope */
+    post:[12,34,P=>{P.e(6,4,4,4,Y);P.r(5,8,2,20,YD);P.r(5,8,1,20,Y);P.r(2,28,8,2,Y);P.r(0,30,12,4,YD);P.r(0,30,12,1,Y);P.p(5,2,YL);P.r(4,3,1,2,YL)}],
+    rope:[70,14,P=>{for(let x=0;x<70;x++){const u=(x-34.5)/34.5,yy=2+8*(1-u*u);P.r(x,Math.round(yy),1,4,RDD);P.p(x,Math.round(yy),RD)}P.r(0,0,3,6,YD);P.r(67,0,3,6,YD);P.r(0,0,3,1,Y);P.r(67,0,3,1,Y)}],
+    bouncer:[24,30,P=>{P.e(11,8,8,8,GN);P.r(0,4,4,4,GN);P.r(19,4,5,4,GN);P.p(0,3,GN);P.p(23,3,GN);P.shade(GN,GNL,(x,y)=>x+y<12&&y<9);
+      P.r(4,6,6,4,K);P.r(12,6,6,4,K);P.r(10,7,2,1,K);P.p(5,7,'#6a6a8a');P.p(13,7,'#6a6a8a');P.r(7,12,8,1,K);P.r(8,13,6,1,'#8a1f3a');
+      P.r(3,16,16,12,'#2a2235');P.r(3,16,16,1,'#4a4260');P.r(3,16,1,12,'#4a4260');P.r(9,16,4,8,W);P.r(8,17,6,2,RD);P.r(10,17,2,2,RDD);
+      P.r(2,20,18,5,'#2a2235');P.r(2,20,18,1,'#4a4260');P.r(1,21,4,4,GN);P.r(17,21,4,4,GN);P.r(2,21,1,4,GNL);P.r(18,21,1,4,GNL);
+      P.r(5,28,5,2,K);P.r(12,28,5,2,K)}],
+    /* the castle */
+    merlon:[20,12,P=>{blk(P,0,0,8,12,RK,RKL,RKD);blk(P,12,0,8,12,RK,RKL,RKD);blk(P,0,6,20,6,RK,RKL,RKD);P.r(0,6,20,1,RKL);P.r(3,8,3,2,RKD);P.r(14,2,3,2,RKD)}],
+    flag:[16,10,P=>{P.r(0,0,16,2,RD);P.r(0,2,14,2,RD);P.r(0,4,11,2,RD);P.r(0,6,8,2,RD);P.r(0,8,5,2,RD);P.r(0,0,16,1,'#ff7a6a');P.r(0,1,1,9,RDD);P.r(3,3,5,3,Y)}],
+    crown:[20,13,P=>{P.r(0,4,20,9,Y);P.r(0,4,3,1,YL);P.r(0,2,3,3,Y);P.r(8,0,4,5,Y);P.r(17,2,3,3,Y);P.r(4,6,2,2,null);P.r(14,6,2,2,null);P.r(9,7,2,2,RD);P.r(3,10,2,2,BL);P.r(15,10,2,2,GN);P.r(1,4,18,1,YL);P.r(0,12,20,1,YD);P.r(19,4,1,9,YD);P.p(9,0,YL);P.p(0,2,YL)}],
+    trumpet:[24,12,P=>{P.r(0,5,16,3,Y);P.r(0,5,16,1,YL);P.r(0,7,16,1,YD);P.r(16,2,3,9,Y);P.r(19,0,5,12,Y);P.r(19,0,5,1,YL);P.r(23,0,1,12,YD);P.r(4,3,2,2,Y);P.r(7,3,2,2,Y);P.r(10,3,2,2,Y);P.r(3,8,10,3,YD);P.r(3,10,10,1,Y);P.r(0,4,2,5,YD)}],
+    note:[8,11,P=>{P.e(2.5,8.5,2.5,2,K);P.r(4,0,2,9,K);P.r(5,0,3,2,K);P.r(6,2,2,2,K)},false],
+    /* ball and chain */
+    iron:[22,22,P=>{P.e(11,11,10.5,10.5,STD);P.shade(STD,ST,(x,y)=>x+y<15);P.shade(STD,STX,(x,y)=>x+y>29);P.e(7,7,2.5,2,STL);P.p(5,9,STL);P.r(9,14,4,2,STX)}],
+    cuff:[18,18,P=>{P.e(9,9,8.5,8.5,ST);P.e(9,9,5,5,null);P.shade(ST,STL,(x,y)=>x+y<12);P.shade(ST,STX,(x,y)=>x+y>24);P.r(7,14,4,4,STD);P.r(7,14,4,1,ST);P.r(8,15,2,2,STX);P.p(14,4,STX);P.p(3,4,STX);P.r(15,8,3,2,STD)}],
+    link:[8,10,P=>{P.r(0,2,8,6,ST);P.r(2,0,4,10,ST);P.r(0,2,8,1,STL);P.r(2,0,4,1,STL);P.r(7,2,1,6,STX);P.r(0,7,8,1,STX);P.r(3,3,2,4,null)}],
+    /* siren */
+    siren:[18,16,P=>{blk(P,2,10,14,6,STD,ST,STX);P.r(3,10,12,1,STL);P.e(9,6.5,6.5,6,RD);P.r(2,6,14,3,RD);P.e(6,4,2,2,'#ff9a8a');P.r(4,9,10,1,RDD);P.e(9,5,2.5,2.5,'#ffd0c0')}],
+    bang:[6,13,P=>{P.r(1,0,4,8,RD);P.r(0,0,6,1,RD);P.r(1,10,4,3,RD);P.r(1,0,1,8,'#ff9a8a')}],
+    /* the cow sits */
+    cow:[26,19,P=>P.map(0,0,[
+      '......HH............HH....',
+      '......HWWW........WWWH....',
+      '.....WWWWWWWWWWWWWWWWW....',
+      '....WWWWWKKWWWWWWWKKWWW...',
+      '....WIWWWKKWWWWWWWKKWIW...',
+      '....WWWWWWWWWWWWWWWWWWW...',
+      '.....WWWNNNNNNNNNNNWWW....',
+      '......WNNiNNNNNNiNNW......',
+      '.......WWWWWWWWWWWW.......',
+      '...WWWWWWWWWKKKWWWWWWWW...',
+      '..WWKKWWWWWWKKKWWWWWWKKWW.',
+      '..WWKKKWWWWWWWWWWWWWKKKWW.',
+      '..WWWWWWWWWWWWWWWWWWWWWWW.',
+      '..WWWWWWWWWWWWWWWWWWWWWdW.',
+      '..WWWWWWWdddddddWWWWWWWdW.',
+      '...WWWWWWdPPPPPdWWWWWWWW..',
+      '....WWWWWWdddddWWWWWWW....',
+      '.....KKK.......KKK........',
+      '.....KKK.......KKK........'],{W:W,K:'#2a2235',H:'#e8dcc0',I:K,N:PK,i:'#7a1f2a',P:PK,d:'#d9c9b0'})],
+    cowblink:[26,3,P=>{P.map(0,0,['....WWWWWKKWWWWWWWKKWWW...','....WWWWWKKWWWWWWWKKWWW...','....WWWWWWWWWWWWWWWWWWW...'],{W:W,K:'#2a2235'});P.r(4,1,3,1,K);P.r(20,1,3,1,K)},false],
+    moo:[20,12,P=>{P.r(1,0,18,9,W);P.r(0,1,20,7,W);P.r(3,9,4,2,W);P.p(3,11,W);
+      const k=K;P.r(2,2,1,5,k);P.p(3,3,k);P.p(4,4,k);P.p(5,3,k);P.r(6,2,1,5,k);P.r(8,2,1,5,k);P.r(11,2,1,5,k);P.r(9,2,2,1,k);P.r(9,6,2,1,k);P.r(13,2,1,5,k);P.r(16,2,1,5,k);P.r(14,2,2,1,k);P.r(14,6,2,1,k)}],
+    daisy:[7,9,P=>{P.r(3,4,1,5,GND);P.p(3,1,W);P.p(3,3,W);P.p(1,2,W);P.p(5,2,W);P.p(2,1,W);P.p(4,1,W);P.p(2,3,W);P.p(4,3,W);P.p(3,2,Y)}],
+    card:[10,14,P=>{P.r(1,1,8,12,'#5a3fa0');P.r(2,2,6,10,'#8a6fd0');P.r(2,2,6,1,'#a890e8');P.r(4,5,2,4,Y);P.p(3,6,Y);P.p(6,7,Y);P.p(3,7,Y);P.p(6,6,Y)}],
+    /* the vault */
+    vault:[40,40,P=>{P.e(20,20,19.5,19.5,STD);P.e(20,20,17,17,ST);P.e(20,20,13.5,13.5,STD);P.e(20,20,11,11,ST);
+      P.shade(ST,STL,(x,y)=>x+y<26&&((x-20)*(x-20)+(y-20)*(y-20))>150);P.shade(ST,STX,(x,y)=>x+y>54&&((x-20)*(x-20)+(y-20)*(y-20))>150);
+      for(let i=0;i<8;i++){const a=i/8*Math.PI*2;P.r(19.5+Math.cos(a)*15.5,19.5+Math.sin(a)*15.5,2,2,STX)}
+      P.e(20,20,4,4,STD);P.e(20,20,2.5,2.5,STX);P.r(12,30,16,3,STX);P.r(13,31,3,1,STL);P.r(17,31,1,1,STL);P.r(21,31,3,1,STL);P.r(25,31,1,1,STL)}],
+    spokes:[22,22,P=>{P.r(10,0,2,22,ST);P.r(0,10,22,2,ST);P.r(10,0,1,22,STL);P.r(0,10,22,1,STL);[[11,1],[11,20],[1,11],[20,11]].forEach(q=>P.e(q[0],q[1],2.5,2.5,STD));P.e(11,11,3,3,STD);P.e(10,10,1.5,1.5,STL)}],
+    bolt:[10,6,P=>{P.r(0,0,10,6,ST);P.r(0,0,10,1,STL);P.r(0,5,10,1,STD);P.r(9,0,1,6,STX)}],
+    gobcart:[16,16,P=>{P.e(8,8,6,6,GN);P.r(1,2,3,3,GN);P.r(12,2,3,3,GN);P.e(8,8,6,6,GN);P.shade(GN,GNL,(x,y)=>x+y<12&&y<8);P.p(5,7,W);P.p(10,7,W);P.p(6,10,RDD);P.r(5,9,6,1,K);P.r(2,13,3,3,WDD);P.r(11,13,3,3,WDD)}],
+    /* the hand */
+    hand:[34,40,P=>{P.r(6,18,24,18,GN);P.r(6,6,5,14,GN);P.r(12,2,5,18,GN);P.r(18,3,5,17,GN);P.r(24,7,5,13,GN);P.r(1,20,6,11,GN);P.r(0,22,3,7,GN);
+      P.r(7,19,22,1,GNL);P.r(6,6,1,30,GNL);P.r(6,6,5,1,GNL);P.r(12,2,5,1,GNL);P.r(18,3,5,1,GNL);P.r(24,7,5,1,GNL);P.r(12,2,1,16,GNL);P.r(18,3,1,15,GNL);P.r(24,7,1,11,GNL);
+      P.r(10,8,1,12,GND);P.r(16,4,1,16,GND);P.r(22,5,1,15,GND);P.r(28,9,1,27,GND);P.r(6,35,24,1,GND);P.r(1,30,6,1,GND);P.r(7,12,3,1,GND);P.r(13,8,3,1,GND);P.r(19,9,3,1,GND);P.r(25,13,3,1,GND);
+      P.r(12,26,12,5,GND);P.r(13,27,10,3,'#2f7a1f');P.r(10,36,16,4,'#5a3a18')}],
+    finger:[34,40,P=>{
+      /* the fist */
+      P.r(8,18,22,16,GN);P.r(6,20,26,12,GN);P.e(19,26,13,8,GN);
+      /* the index finger, up */
+      P.r(10,2,7,18,GN);P.e(13.5,3,3.5,3,GN);
+      /* the thumb, folded over the front */
+      P.r(6,22,10,7,GN);P.e(7,25,3,3.5,GN);
+      /* light and dark */
+      P.r(10,1,6,1,GNL);P.r(10,2,1,18,GNL);P.r(8,18,2,1,GNL);P.r(6,20,1,12,GNL);P.r(16,3,1,17,GND);
+      P.r(30,22,1,10,GND);P.r(8,33,22,1,GND);P.r(16,23,1,6,GND);P.r(10,28,6,1,GND);
+      /* the curled fingers' knuckle lines */
+      P.r(18,21,1,10,GND);P.r(23,21,1,10,GND);P.r(28,22,1,8,GND);P.r(17,20,12,1,GNL);
+      P.r(10,34,16,6,'#5a3a18');P.r(10,34,16,1,'#8a5a2a')}],
+    shadow:[30,10,P=>P.e(15,5,14.5,4.5,'rgba(26,16,48,.45)'),false],
+    /* goblins and boards */
+    goblin:[20,26,P=>{P.e(9,8,7,7,GN);P.r(0,3,4,4,GN);P.r(15,3,5,4,GN);P.p(0,2,GN);P.p(19,2,GN);P.shade(GN,GNL,(x,y)=>x+y<11&&y<8);P.r(6,7,2,2,W);P.r(11,7,2,2,W);P.p(7,8,K);P.p(12,8,K);P.r(5,11,8,1,K);P.r(6,12,6,1,'#8a1f3a');P.p(7,12,W);P.p(10,12,W);
+      P.r(4,15,10,9,WDD);P.r(4,15,10,1,WD);P.r(4,15,1,9,WD);P.r(13,15,1,9,'#3a2210');P.r(8,15,2,9,'#3a2210');P.r(4,24,3,2,'#3a2210');P.r(11,24,3,2,'#3a2210')}],
+    gobhappy:[20,26,P=>{P.e(9,8,7,7,GN);P.r(0,3,4,4,GN);P.r(15,3,5,4,GN);P.p(0,2,GN);P.p(19,2,GN);P.shade(GN,GNL,(x,y)=>x+y<11&&y<8);P.r(6,8,2,1,K);P.r(11,8,2,1,K);P.p(5,7,K);P.p(8,7,K);P.p(10,7,K);P.p(13,7,K);P.r(5,11,8,1,K);P.r(6,12,6,2,'#8a1f3a');P.r(6,12,6,1,W);
+      P.r(4,15,10,9,WDD);P.r(4,15,10,1,WD);P.r(4,15,1,9,WD);P.r(13,15,1,9,'#3a2210');P.r(8,15,2,9,'#3a2210');P.r(4,24,3,2,'#3a2210');P.r(11,24,3,2,'#3a2210')}],
+    thumb:[8,10,P=>{P.r(1,4,6,6,GN);P.r(2,0,3,5,GN);P.r(2,0,3,1,GNL);P.r(1,4,1,6,GNL);P.r(6,4,1,6,GND);P.r(1,9,6,1,GND)}],
+    hammer:[12,16,P=>{blk(P,0,0,12,6,ST,STL,STD);P.r(0,0,12,1,STL);P.r(10,0,2,6,STX);P.r(5,6,2,10,WD);P.r(5,6,1,10,WDL);P.r(6,6,1,10,WDD)}],
+    nail:[5,5,P=>{P.r(0,0,5,5,ST);P.r(0,0,5,1,STL);P.p(4,4,STX);P.p(2,2,STD)}],
+    star:[9,9,P=>P.map(0,0,['....L....','...LYY...','.LLYYYYY.','..YYYYD..','..YYDYD..','.YY...DD.'],{Y:'#ffd21a',L:YL,D:YD})],
+    puff:[13,10,P=>P.map(0,0,['....LLLLL....','..LLLLLLLWW..','.LLLLLLLWWWW.','.LLLLWWWWWWW.','.LLWWWWWWWWD.','.LWWWWWWWWDD.','.WWWWWWWWDDD.','..WWWWWDDDD..','....DDDDD....'],{L:'#ffffff',W:'#e9e4f0',D:'#bdb6cc'})],
+    /* the dragon */
+    dragon:[48,30,P=>dragon(P,0)],
+    dragon2:[48,30,P=>dragon(P,1)],
+    flame:[30,14,P=>{for(let x=0;x<30;x++){const u=x/30,hh=Math.max(1,Math.round(6.5*Math.sqrt(1-u*u)*(u<.15?u/.15+.3:1)));P.r(x,7-hh,1,hh*2,OR);
+        if(x<24){const h2=Math.max(0,Math.round(hh*.62));if(h2)P.r(x,7-h2,1,h2*2,Y)}if(x<16){const h3=Math.max(0,Math.round(hh*.3));if(h3)P.r(x,7-h3,1,h3*2,YL)}}
+      P.r(22,1,3,1,OR);P.p(25,0,OR);P.r(24,12,3,1,OR);P.p(27,13,OR);P.p(29,5,OR);P.p(29,9,OR)}],
+    lick:[8,12,P=>{P.r(2,6,4,6,OR);P.r(3,3,3,4,OR);P.p(4,1,OR);P.p(4,2,OR);P.r(3,8,2,4,Y);P.p(4,6,Y);P.p(3,11,YL);P.p(1,9,OR);P.p(6,7,OR)}],
+    scorch:[20,7,P=>{P.e(10,3.5,9.5,3,'rgba(26,16,48,.55)');P.e(10,3.5,5,1.6,'rgba(10,6,20,.7)')},false],
+    drumstick:[14,14,P=>{P.e(5,6,5,5,'#c97a3a');P.e(4,5,3,2.5,'#e0a060');P.r(8,8,2,2,'#c97a3a');P.r(9,9,2,2,'#e8dcc0');P.r(10,10,3,3,'#e8dcc0');P.p(13,10,'#e8dcc0');P.p(10,13,'#e8dcc0');P.p(2,8,'#8a4a1a');P.p(6,9,'#8a4a1a')}]
+  };
+  function dragon(P,f){
+    const R='#d9402a',RL='#f06a4a',RDK='#8a2218',BE='#ffd9a0',HN='#ffe07a',W2='#ffffff';
+    /* tail, with a spade on the end */
+    for(let x=0;x<14;x++)P.r(x,19-Math.round(x*.35),14-x>8?2:3,2,R);P.r(0,16,3,5,R);P.p(0,15,R);P.p(0,21,R);P.p(1,14,R);
+    /* body and belly */
+    P.e(24,19,12,7,R);P.e(25,22,9,3.5,BE);P.r(17,22,16,1,'#e8b870');P.r(18,24,14,1,'#e8b870');
+    /* back spikes */
+    [[14,12],[19,10],[24,10],[29,11]].forEach(q=>{P.r(q[0],q[1]+1,3,2,RDK);P.p(q[0]+1,q[1],RDK)});
+    /* neck up to the head */
+    P.r(31,9,6,9,R);P.r(33,6,6,6,R);
+    /* head: a big jaw, open, teeth, an eye with a brow, horns, a nostril */
+    P.e(40,8,6.5,5,R);P.r(40,6,8,5,R);P.r(41,11,7,2,R);P.r(43,13,5,2,RDK);
+    P.r(41,10,7,1,'#5a1010');P.p(43,11,W2);P.p(45,11,W2);P.p(47,11,W2);P.p(44,13,W2);P.p(46,13,W2);
+    P.r(39,5,3,3,W2);P.p(40,6,K);P.r(38,4,4,1,RDK);P.p(46,7,RDK);
+    P.r(36,1,2,4,HN);P.r(35,0,2,2,HN);P.r(40,0,2,4,HN);P.r(41,-1,1,1,HN);
+    /* the fire glow in the mouth */
+    P.r(44,12,3,1,OR);P.p(47,12,Y);
+    /* wing: up or down, a fan of three fingers with a membrane */
+    if(f===0){for(let i=0;i<12;i++)P.r(22-i,13-i,2+Math.min(i,6),1,RL);
+      P.r(8,0,18,2,RL);P.r(10,2,12,1,RL);P.r(6,1,4,2,RL);P.p(5,0,RL);P.r(12,4,2,1,RDK);P.r(16,6,2,1,RDK);P.r(20,9,2,1,RDK);P.r(13,1,1,2,RDK);P.r(19,1,1,2,RDK)}
+    else{for(let i=0;i<9;i++)P.r(21-i,19+i,3+Math.min(i,5),1,RL);P.r(8,27,16,2,RL);P.r(6,26,4,2,RL);P.p(5,27,RL);P.r(14,22,2,1,RDK);P.r(18,20,2,1,RDK);P.r(11,25,1,2,RDK);P.r(17,26,1,2,RDK)}
+    /* legs and claws */
+    P.r(18,24,3,4,RDK);P.r(28,24,3,4,RDK);P.r(17,27,5,2,RDK);P.r(27,27,5,2,RDK);P.p(16,28,W2);P.p(26,28,W2);
+    /* the lit side */
+    P.shade(R,RL,(x,y)=>x+y<36&&y<17&&x>13&&x<36);
+  }
+  /* every sprite is drawn with a one-pixel margin, so the ink outline is never cut off at the grid's edge */
+  const off=P=>({p:(x,y,c)=>P.p(x+1,y+1,c),r:(x,y,w,h,c)=>P.r(x+1,y+1,w,h,c),e:(cx,cy,rx,ry,c)=>P.e(cx+1,cy+1,rx,ry,c),
+    map:(x0,y0,rows,pal)=>P.map(x0+1,y0+1,rows,pal),shade:(a,b,pred)=>P.shade(a,b,(x,y)=>pred(x-1,y-1)),recolor:m=>P.recolor(m)});
+  const padded=(k,w,h,fn,ol)=>spr(k,w+2,h+2,P=>fn(off(P)),ol);
+  const S=k=>{const a=ART[k];return padded('lc_'+k,a[0],a[1],a[2],a[3])};
+  const SZ=(k,z)=>`width:${(ART[k][0]+2)*z}px;height:${(ART[k][1]+2)*z}px`;
+  /* an image placed by its centre, in stage coordinates */
+  const im=(k,z,x,y,cls,sty)=>`<img class="${cls||''}" src="${S(k)}" alt="" style="${SZ(k,z)};left:${px(x-(ART[k][0]+2)*z/2)};top:${px(y-(ART[k][1]+2)*z/2)};${sty||''}">`;
+  const th=(k,fn)=>padded(k,24,24,fn);
+  const bit=(cls,x,y,w,h,col,sty)=>`<i class="${cls}" style="left:${px(x-w/2)};top:${px(y-h/2)};width:${px(w)};height:${px(h)};background:${col};${sty||''}"></i>`;
+  const grp=(cls,x,y,html,sty)=>`<div class="${cls}" style="left:${px(x)};top:${px(y)};${sty||''}">${html}</div>`;
+  const vars=o=>Object.keys(o).map(k=>`--${k}:${o[k]}`).join(';');
+  const puffs=(x,y,n,r,d,z)=>{let h='';for(let i=0;i<n;i++){const a=Math.PI+i/n*Math.PI*2+rnd(-.3,.3);
+    h+=im('puff',z||3,x,y,'lc-pf',vars({dx:px(Math.cos(a)*r),dy:px(Math.sin(a)*r*.5-6),d:((d||0)+rnd(0,60)).toFixed(0)+'ms',ms:(380+rnd(0,200)).toFixed(0)+'ms',s:1.4}))}return h};
+  const sparks=(x,y,n,r,d,cols)=>{let h='';for(let i=0;i<n;i++){const a=i/n*Math.PI*2+rnd(-.2,.2),R=r*(i%2?1:.6);
+    h+=bit('lc-sp',x,y,i%2?8:6,i%2?8:6,(cols||[YL,W])[i%2],vars({dx:px(Math.cos(a)*R),dy:px(Math.sin(a)*R),d:(d||0)+'ms'}))}return h};
+  const stars=(x,y,n,d)=>{let h='';for(let i=0;i<n;i++){const a=-Math.PI/2+(i-(n-1)/2)*.9;
+    h+=im('star',3,x+Math.cos(a)*34,y+Math.sin(a)*22,'lc-tw',vars({d:((d||0)+i*60)+'ms'}))}return h};
+  const sideOf=x=>x<210?-1:1;
+
+  /* ------------------------------------------------------------------ styles */
+  const st=document.createElement('style');st.textContent=`
+.lc{position:absolute;left:0;top:0;width:0;height:0;pointer-events:none;z-index:64}
+.lc img,.lc i,.lc b,.lc div{position:absolute;display:block;image-rendering:pixelated;pointer-events:none;max-width:none}
+.lc div{width:0;height:0}
+.lc i{box-shadow:0 0 0 1.5px var(--ink,#1a1030)}
+.lc i.nb{box-shadow:none}
+.lc .lc-fl{animation:lcFly var(--ms,1000ms) cubic-bezier(.12,.7,.3,1) var(--d,0ms) both}
+@keyframes lcFly{0%{translate:0 0;rotate:0deg;opacity:0}6%{opacity:1}55%{translate:var(--dx) var(--dy);rotate:var(--r,0deg);opacity:1;animation-timing-function:ease-in}100%{translate:calc(var(--dx)*1.12) calc(var(--dy) + var(--g,60px));rotate:calc(var(--r,0deg)*2);opacity:0}}
+.lc .lc-sp{animation:lcSpark 620ms cubic-bezier(.1,.8,.3,1) var(--d,0ms) both}
+@keyframes lcSpark{0%{translate:0 0;scale:1.3;opacity:0}5%{opacity:1}70%{translate:var(--dx) var(--dy);scale:1;opacity:1}100%{translate:calc(var(--dx)*1.08) calc(var(--dy)*1.08 + 12px);scale:.3;opacity:0}}
+.lc .lc-pf{animation:lcPuff var(--ms,700ms) ease-out var(--d,0ms) both}
+@keyframes lcPuff{0%{translate:0 0;scale:.25;opacity:0}15%{opacity:1}60%{opacity:.95}100%{translate:var(--dx) var(--dy);scale:var(--s,1.5);opacity:0}}
+.lc .lc-fade{animation:lcFade var(--ms,1500ms) linear var(--d,0ms) both}
+@keyframes lcFade{0%{opacity:0}8%,75%{opacity:1}100%{opacity:0}}
+.lc .lc-tw{animation:lcTwink 460ms ease-in-out var(--d,0ms) 2 both}
+@keyframes lcTwink{0%,100%{scale:0;rotate:0deg;opacity:0}50%{scale:1;rotate:45deg;opacity:1}}
+.lc .lc-ring{box-shadow:0 0 0 1.5px var(--ink,#1a1030),inset 0 0 0 1.5px var(--ink,#1a1030);border:3px solid #fff3a0;border-radius:50%;animation:lcRing 600ms ease-out var(--d,0ms) both}
+@keyframes lcRing{0%{scale:.2;opacity:0}15%{opacity:1}100%{scale:1.7;opacity:0}}
+/* THE OLD CLUNK */
+.lc .lc-body{transform-origin:50% 100%;animation:lcBody 1550ms linear both}
+@keyframes lcBody{0%{translate:0 -380px;animation-timing-function:cubic-bezier(.6,0,1,.6)}16%{translate:0 0;scale:1 1}19%{scale:1.25 .72}24%{scale:.95 1.06;animation-timing-function:ease-out}29%{translate:0 -5px;scale:1 1;animation-timing-function:ease-in}33%{translate:0 0}44%{translate:0 0}46%{translate:0 4px;scale:1.08 .92}50%{translate:0 0;scale:1 1}86%{translate:0 0;opacity:1}100%{translate:0 0;opacity:0}}
+.lc .lc-shk{animation:lcShackle 1550ms linear both}
+@keyframes lcShackle{0%,30%{translate:0 -330px;opacity:1;animation-timing-function:cubic-bezier(.5,0,1,.5)}45%{translate:0 0}46%{translate:0 4px}50%{translate:0 0}86%{translate:0 0;opacity:1}100%{opacity:0}}
+.lc .lc-key{animation:lcKey 1550ms linear both}
+@keyframes lcKey{0%,62%{translate:0 -300px;rotate:0deg;opacity:0}63%{opacity:1;animation-timing-function:cubic-bezier(.5,0,1,.5)}76%{translate:0 0;rotate:0deg;animation-timing-function:ease-out}84%{translate:36px -40px;rotate:140deg;animation-timing-function:ease-in}94%{translate:70px 60px;rotate:300deg;opacity:1}100%{translate:80px 90px;rotate:360deg;opacity:0}}
+/* CASE CLOSED */
+.lc .lc-gv{transform-origin:94% 50%;animation:lcGavel 1550ms linear both}
+@keyframes lcGavel{0%{rotate:80deg;opacity:0}6%{opacity:1;animation-timing-function:cubic-bezier(.6,0,1,.5)}14%{rotate:0deg;animation-timing-function:ease-out}20%{rotate:50deg;animation-timing-function:cubic-bezier(.6,0,1,.5)}28%{rotate:0deg;animation-timing-function:ease-out}36%{rotate:56deg;animation-timing-function:cubic-bezier(.6,0,1,.5)}46%{rotate:0deg}50%{rotate:6deg}54%{rotate:0deg}80%{rotate:0deg;opacity:1}100%{rotate:70deg;opacity:0}}
+.lc .lc-bk{animation:lcBlock 1550ms steps(1) both}
+@keyframes lcBlock{0%{opacity:1}46%,100%{opacity:0}}
+.lc .lc-bk2{animation:lcBlock2 1550ms linear both}
+@keyframes lcBlock2{0%,45%{opacity:0}46%{opacity:1;translate:0 0}48%{translate:0 3px}52%{translate:0 0}86%{opacity:1}100%{opacity:0}}
+.lc .lc-half{animation:lcHalf 1550ms linear both}
+@keyframes lcHalf{0%,45%{opacity:0;translate:0 0}46%{opacity:1;animation-timing-function:ease-out}60%{translate:var(--dx) -18px;rotate:var(--r)}74%{translate:calc(var(--dx)*1.4) 8px;rotate:calc(var(--r)*1.6);opacity:1;animation-timing-function:ease-in}100%{translate:calc(var(--dx)*1.6) 40px;rotate:calc(var(--r)*2);opacity:0}}
+.lc .lc-wig{animation:lcWig 1550ms linear both}
+@keyframes lcWig{0%,44%{translate:0 -300px;opacity:0}46%{opacity:1;animation-timing-function:cubic-bezier(.5,0,1,.5)}62%{translate:0 0;rotate:0deg;animation-timing-function:ease-out}68%{translate:0 -10px;rotate:-10deg;animation-timing-function:ease-in}74%{translate:0 0;rotate:6deg}78%{rotate:0deg}86%{translate:0 0;opacity:1}100%{opacity:0}}
+/* OFFICIALLY OVER */
+.lc .lc-stp{transform-origin:50% 100%;animation:lcStamp 1550ms linear both}
+@keyframes lcStamp{0%{translate:var(--sx) var(--sy);scale:1.9;rotate:var(--ra);opacity:0}6%{opacity:1;animation-timing-function:cubic-bezier(.5,0,1,.4)}24%{translate:0 0;scale:1 1;rotate:0deg}26%{scale:1.15 .82;rotate:0deg}30%{scale:1 1}44%{translate:0 0;rotate:0deg;animation-timing-function:ease-in}60%{translate:0 -70px;rotate:-6deg;scale:1.1;animation-timing-function:ease-out}72%{translate:var(--sx) var(--sy);scale:1.6;rotate:var(--ra);opacity:1}76%,100%{translate:var(--sx) var(--sy);scale:1.7;opacity:0}}
+.lc .lc-mk{animation:lcMark 1550ms linear both}
+@keyframes lcMark{0%,25%{opacity:0;scale:1}26%{opacity:1;scale:1.06;rotate:var(--rm)}34%{scale:1;rotate:var(--rm)}84%{opacity:1;rotate:var(--rm)}100%{opacity:0;rotate:var(--rm)}}
+.lc .lc-splat{animation:lcSplat 1550ms linear var(--d,0ms) both}
+@keyframes lcSplat{0%,25%{opacity:0;scale:0}27%{opacity:1;scale:1.4}30%{scale:1}84%{opacity:1}100%{opacity:0}}
+/* NOT ON THE LIST */
+.lc i.lc-bars{box-shadow:none}
+.lc .lc-post{transform-origin:50% 100%;animation:lcPost 1550ms linear var(--d,0ms) both}
+@keyframes lcPost{0%{translate:0 -400px;opacity:1;animation-timing-function:cubic-bezier(.6,0,1,.6)}14%{translate:0 0;scale:1 1}16%{scale:1.2 .8}20%{scale:.96 1.04;animation-timing-function:ease-out}24%{translate:0 -4px;scale:1 1;animation-timing-function:ease-in}28%,86%{translate:0 0;opacity:1}100%{opacity:0}}
+.lc .lc-rope{transform-origin:0 20%;animation:lcRope 1550ms linear both}
+@keyframes lcRope{0%,22%{scale:0 1;opacity:0}23%{opacity:1;animation-timing-function:ease-out}32%{scale:1.06 1}36%{scale:1 1.12}40%{scale:1 .94}44%{scale:1 1.04}48%{scale:1 1}86%{opacity:1}100%{opacity:0}}
+.lc .lc-bnc{transform-origin:50% 100%;animation:lcBouncer 1550ms linear both}
+@keyframes lcBouncer{0%,26%{translate:0 120px;opacity:0}27%{opacity:1;animation-timing-function:ease-out}36%{translate:0 -8px}40%{translate:0 0;rotate:0deg}52%{rotate:-7deg}58%{rotate:7deg}64%{rotate:-7deg}70%{rotate:6deg}76%{rotate:0deg}86%{translate:0 0;opacity:1;animation-timing-function:ease-in}100%{translate:0 120px;opacity:0}}
+.lc .lc-glint{animation:lcGlint 1550ms linear both}
+@keyframes lcGlint{0%,44%{scale:0;opacity:0}47%{scale:1.3;opacity:1}50%{scale:0;opacity:0}60%{scale:0;opacity:0}63%{scale:1.3;opacity:1}66%,100%{scale:0;opacity:0}}
+.lc .lc-pebble{animation:lcPebble 700ms cubic-bezier(.2,.7,.4,1) var(--d,0ms) both}
+@keyframes lcPebble{0%{translate:0 0;opacity:0}5%{opacity:1}50%{translate:var(--dx) var(--dy);animation-timing-function:ease-in}100%{translate:calc(var(--dx)*1.3) calc(var(--dy) + 70px);rotate:var(--r);opacity:0}}
+/* BALL AND CHAIN */
+.lc .lc-ball{transform-origin:50% 100%;animation:lcBall 1550ms linear both}
+@keyframes lcBall{0%{translate:0 -440px;animation-timing-function:cubic-bezier(.6,0,1,.6)}16%{translate:0 0;scale:1 1}18%{scale:1.3 .7}23%{scale:.94 1.06;animation-timing-function:ease-out}28%{translate:0 -8px;scale:1 1;animation-timing-function:ease-in}32%{translate:0 0}34%{scale:1.08 .94}37%{scale:1 1}50%{rotate:0deg}56%{rotate:calc(var(--sgn)*-9deg)}62%{rotate:calc(var(--sgn)*6deg)}68%{rotate:calc(var(--sgn)*-3deg)}72%{rotate:0deg}86%{translate:0 0;opacity:1}100%{translate:0 0;opacity:0}}
+.lc .lc-cuff{animation:lcCuff 1550ms linear both}
+@keyframes lcCuff{0%,16%{scale:1.8;opacity:0}17%{opacity:1;animation-timing-function:cubic-bezier(.6,0,1,.5)}23%{scale:1 1}25%{scale:1.15 .85}29%{scale:1 1}86%{opacity:1}100%{opacity:0}}
+.lc .lc-link{animation:lcLink 1550ms linear var(--d,0ms) both}
+@keyframes lcLink{0%,22%{scale:0;opacity:0}24%{scale:1.3;opacity:1}28%{scale:1}86%{opacity:1}100%{opacity:0}}
+.lc .lc-ckey{animation:lcCKey 1550ms linear both}
+@keyframes lcCKey{0%,40%{translate:0 0;rotate:0deg;scale:1;opacity:0}41%{opacity:1}50%{rotate:90deg}53%{rotate:80deg}57%{rotate:90deg;animation-timing-function:cubic-bezier(.3,.6,.6,1)}78%{translate:var(--dx) -130px;rotate:420deg;scale:.6}94%{translate:calc(var(--dx)*1.6) -40px;rotate:760deg;scale:.25;opacity:1}100%{translate:calc(var(--dx)*1.7) -20px;scale:.1;opacity:0}}
+/* WEE WOO WEE WOO */
+.lc .lc-sr{animation:lcSiren 1550ms linear both}
+@keyframes lcSiren{0%{translate:0 -200px;scale:1;opacity:0;animation-timing-function:cubic-bezier(.5,0,1,.5)}3%{opacity:1}12%{translate:0 0}14%{scale:1.2 .8}18%{scale:1 1}22%{scale:1 1}26%{scale:.95 1.06}30%{scale:1 1}86%{translate:0 0;opacity:1}100%{translate:0 -60px;opacity:0}}
+.lc i.lc-beam{box-shadow:none;transform-origin:50% 0;clip-path:polygon(38% 0,62% 0,100% 100%,0 100%);animation:lcBeam 1550ms linear both}
+@keyframes lcBeam{0%,12%{opacity:0;rotate:var(--a)}16%{opacity:.6}84%{opacity:.6;rotate:calc(var(--a) + 720deg)}100%{opacity:0;rotate:calc(var(--a) + 820deg)}}
+.lc i.lc-wash{box-shadow:none;animation:lcWash 1550ms steps(1) both}
+@keyframes lcWash{0%,12%{opacity:0}14%{opacity:.22}20%{opacity:0}27%{opacity:.22}33%{opacity:0}40%{opacity:.22}46%{opacity:0}53%{opacity:.22}59%{opacity:0}66%{opacity:.22}72%{opacity:0}79%{opacity:.18}85%,100%{opacity:0}}
+.lc .lc-bang{transform-origin:50% 100%;animation:lcBang 1550ms linear var(--d,0ms) both}
+@keyframes lcBang{0%,16%{scale:0;opacity:0}20%{scale:1.3;opacity:1}24%{scale:1}30%{scale:1 .9}36%{scale:1 1.05}42%{scale:1}76%{scale:1;opacity:1}86%,100%{scale:0;opacity:0}}
+/* SIT-DOWN STRIKE */
+.lc .lc-shd{animation:lcShadow 1550ms linear both}
+@keyframes lcShadow{0%{scale:.2;opacity:0}3%{opacity:.5}18%{scale:1;opacity:1}86%{scale:1;opacity:1}100%{opacity:0}}
+.lc .lc-cow{transform-origin:50% 100%;animation:lcCow 1550ms linear both}
+@keyframes lcCow{0%{translate:0 -440px;rotate:8deg;animation-timing-function:cubic-bezier(.55,0,1,.6)}18%{translate:0 0;rotate:0deg;scale:1 1}21%{scale:1.3 .66}26%{scale:.94 1.08;animation-timing-function:ease-out}31%{translate:0 -6px;scale:1 1;animation-timing-function:ease-in}35%{translate:0 0}50%{scale:1}54%{scale:1.03 .97}58%{scale:1}70%{scale:1}74%{scale:1.03 .97}78%{scale:1}86%{translate:0 0;opacity:1}100%{opacity:0}}
+.lc .lc-blink{animation:lcBlink 1550ms steps(1) both}
+@keyframes lcBlink{0%,42%{opacity:0}45%{opacity:1}49%{opacity:0}66%{opacity:1}70%,100%{opacity:0}}
+.lc .lc-moo{transform-origin:20% 100%;animation:lcMoo 1550ms linear both}
+@keyframes lcMoo{0%,48%{scale:0;opacity:0}54%{scale:1.15;opacity:1}58%{scale:1}84%{scale:1;opacity:1}92%,100%{scale:0;opacity:0}}
+.lc .lc-daisy{transform-origin:50% 100%;animation:lcDaisy 1550ms linear both}
+@keyframes lcDaisy{0%,58%{scale:0;opacity:0}66%{scale:1.2 1;opacity:1}70%{scale:1}86%{opacity:1;rotate:0deg}100%{opacity:0;rotate:-20deg}}
+/* FORT KNOCKS */
+.lc .lc-vt{animation:lcVault 1550ms linear both}
+@keyframes lcVault{0%{translate:var(--fx) 60px;animation-timing-function:cubic-bezier(.2,.5,.5,1)}24%{translate:0 0;animation-timing-function:ease-out}28%{translate:calc(var(--fx) * -.05) -4px}32%,86%{translate:0 0;opacity:1}100%{translate:0 0;opacity:0}}
+.lc .lc-vt img.lc-roll{animation:lcRoll 1550ms linear both}
+@keyframes lcRoll{0%{rotate:0deg;animation-timing-function:cubic-bezier(.2,.5,.5,1)}24%{rotate:var(--spin)}28%{rotate:calc(var(--spin) - 6deg)}32%,100%{rotate:var(--spin)}}
+.lc .lc-spk{animation:lcSpokes 1550ms linear both}
+@keyframes lcSpokes{0%,30%{rotate:0deg;opacity:0}31%{opacity:1;animation-timing-function:cubic-bezier(.3,0,.7,1)}60%{rotate:540deg}64%{rotate:520deg}68%{rotate:540deg}86%{opacity:1}100%{opacity:0}}
+.lc .lc-bolt{animation:lcBoltOut 1550ms linear var(--d,0ms) both}
+@keyframes lcBoltOut{0%,60%{translate:0 0;rotate:var(--a);opacity:0}61%{opacity:1;animation-timing-function:ease-out}66%{translate:var(--dx) var(--dy);rotate:var(--a)}86%{translate:var(--dx) var(--dy);rotate:var(--a);opacity:1}100%{opacity:0}}
+.lc .lc-lamp{animation:lcLamp 1550ms steps(1) both}
+@keyframes lcLamp{0%,24%{opacity:0}25%,67%{opacity:var(--on,1)}68%,86%{opacity:var(--off,0)}100%{opacity:0}}
+.lc .lc-gcart{animation:lcGobCart 1550ms linear both}
+@keyframes lcGobCart{0%,8%{translate:0 0;rotate:0deg;opacity:0}9%{opacity:1}12%{translate:0 -14px}15%{translate:0 0;scale:1.3 .7}17%{scale:1 1;animation-timing-function:ease-out}30%{translate:var(--dx) -70px;rotate:calc(var(--sgn)*360deg)}42%{translate:calc(var(--dx)*1.5) 0;rotate:calc(var(--sgn)*720deg);scale:1 1}44%{scale:1.3 .7}48%{scale:1 1}60%{translate:calc(var(--dx)*1.5) 0;opacity:1}100%{translate:calc(var(--dx)*1.8) 0;opacity:0}}
+/* TALK TO THE HAND */
+.lc .lc-hd{transform-origin:50% 90%;animation:lcHand 1550ms linear both}
+@keyframes lcHand{0%{translate:var(--sx) var(--sy);scale:2.4;rotate:var(--ra);opacity:0}5%{opacity:1;animation-timing-function:cubic-bezier(.5,0,1,.5)}18%{translate:0 0;scale:1;rotate:0deg}20%{scale:1.22 .8}25%{scale:1 1}40%{translate:0 0;scale:1;animation-timing-function:ease-out}48%{translate:0 -10px;scale:1.08}50%{opacity:1}51%,100%{opacity:0}}
+.lc .lc-hd2{transform-origin:50% 90%;animation:lcFinger 1550ms linear both}
+@keyframes lcFinger{0%,50%{translate:0 -10px;scale:1.08;rotate:0deg;opacity:0}51%{opacity:1}56%{rotate:-14deg}62%{rotate:12deg}68%{rotate:-14deg}74%{rotate:12deg}80%{rotate:0deg;translate:0 -10px;opacity:1;animation-timing-function:ease-in}100%{translate:var(--sx) var(--sy);scale:2.2;opacity:0}}
+.lc .lc-hshd{animation:lcHShadow 1550ms linear both}
+@keyframes lcHShadow{0%{scale:.2;opacity:0}18%{scale:1;opacity:1}40%{scale:1;opacity:1}48%{scale:.7;opacity:.5}80%{scale:.7;opacity:.5}100%{scale:.1;opacity:0}}
+.lc .lc-hcard{animation:lcHCard var(--ms,900ms) linear var(--d,0ms) both}
+@keyframes lcHCard{0%{translate:0 0;rotate:0deg;opacity:0}3%{opacity:1;animation-timing-function:cubic-bezier(.2,.6,.5,1)}50%{translate:var(--dx) var(--dy);rotate:var(--r);animation-timing-function:ease-in}88%{opacity:1}100%{translate:calc(var(--dx)*1.2) calc(var(--dy) + 120px);rotate:calc(var(--r)*2);opacity:0}}
+/* NAILED IT */
+.lc .lc-gob{transform-origin:50% 100%;animation:lcGob 1550ms linear both}
+@keyframes lcGob{0%{translate:0 80px;opacity:0}4%{opacity:1;animation-timing-function:ease-out}12%{translate:0 -10px}16%{translate:0 0}86%{translate:0 0;opacity:1;animation-timing-function:ease-in}100%{translate:0 80px;opacity:0}}
+.lc .lc-gob img.lc-swap{animation:lcGobSwap 1550ms steps(1) both}
+@keyframes lcGobSwap{0%,69%{opacity:var(--a0)}70%,100%{opacity:var(--a1)}}
+.lc .lc-hmr{transform-origin:50% 90%;animation:lcHammer 1550ms linear both}
+@keyframes lcHammer{0%,14%{rotate:-70deg;opacity:0}15%{opacity:1}20%{rotate:20deg}26%{rotate:-70deg}31%{rotate:20deg}38%{rotate:-70deg}43%{rotate:20deg}50%{rotate:-70deg}55%{rotate:20deg}62%{rotate:-70deg}66%{rotate:20deg}69%{rotate:20deg;opacity:1}70%,100%{opacity:0}}
+.lc .lc-thumb{animation:lcThumb 1550ms linear both}
+@keyframes lcThumb{0%,69%{scale:0;opacity:0}72%{scale:1.3;opacity:1}76%{scale:1}86%{scale:1;opacity:1}100%{scale:1;opacity:0}}
+.lc .lc-plank{animation:lcPlank 1550ms linear var(--d,0ms) both}
+@keyframes lcPlank{0%{translate:var(--sx) 0;rotate:calc(var(--ra) + 10deg);scale:1.1;opacity:0}1%{opacity:1;animation-timing-function:cubic-bezier(.5,0,1,.5)}7%{translate:0 0;rotate:var(--ra);scale:1 1}8%{scale:1.04 .9}11%{scale:1 1}70%{opacity:1}100%{opacity:0}}
+.lc .lc-nail{animation:lcNail 1550ms linear var(--d,0ms) both}
+@keyframes lcNail{0%{translate:0 -24px;scale:1.4;opacity:0}1%{opacity:1;animation-timing-function:cubic-bezier(.6,0,1,.5)}6%{translate:0 0;scale:1}70%{opacity:1}100%{opacity:0}}
+.lc .lc-pop{animation:lcPop 1550ms linear var(--d,0ms) both}
+@keyframes lcPop{0%{scale:0;opacity:0}2%{scale:1.4;opacity:1}8%{scale:.3;opacity:0}100%{opacity:0}}
+/* MY HOUSE, MY RULES */
+.lc .lc-tower{animation:lcTower 1550ms linear var(--d,0ms) both}
+@keyframes lcTower{0%{translate:0 var(--from)}1%{animation-timing-function:cubic-bezier(.4,0,.6,1)}22%{translate:0 0}26%{translate:0 10px}30%,86%{translate:0 0;opacity:1}100%{translate:0 var(--from);opacity:0}}
+.lc .lc-wall{animation:lcWall 1550ms linear both}
+@keyframes lcWall{0%{translate:0 -150px}1%{animation-timing-function:cubic-bezier(.4,0,.6,1)}22%{translate:0 0}26%{translate:0 -8px}30%,86%{translate:0 0;opacity:1}100%{translate:0 -150px;opacity:0}}
+.lc .lc-flag{transform-origin:0 50%;animation:lcFlag 1550ms linear both}
+@keyframes lcFlag{0%,26%{scale:0 1;opacity:0}27%{opacity:1}36%{scale:1.1 1}40%{scale:1 1}48%{scale:.9 1}56%{scale:1 1}64%{scale:.92 1}72%{scale:1 1}86%{opacity:1}100%{scale:0 1;opacity:0}}
+.lc .lc-crown{animation:lcCrown 1550ms linear both}
+@keyframes lcCrown{0%,30%{translate:0 -260px;rotate:-20deg;opacity:0}31%{opacity:1;animation-timing-function:cubic-bezier(.5,0,1,.5)}44%{translate:0 0;rotate:0deg;scale:1 1}46%{scale:1.2 .8}50%{scale:1 1;animation-timing-function:ease-out}55%{translate:0 -8px;animation-timing-function:ease-in}60%{translate:0 0}86%{translate:0 0;opacity:1}100%{translate:0 -40px;opacity:0}}
+.lc .lc-trump{transform-origin:10% 50%;animation:lcTrump 1550ms linear var(--d,0ms) both}
+@keyframes lcTrump{0%,28%{translate:var(--sx) 0;opacity:0;rotate:var(--ra)}34%{translate:0 0;opacity:1;rotate:var(--ra)}40%{rotate:calc(var(--ra) - 8deg)}46%{rotate:calc(var(--ra) + 4deg)}52%{rotate:calc(var(--ra) - 8deg)}58%{rotate:var(--ra)}84%{translate:0 0;opacity:1}100%{translate:var(--sx) 0;opacity:0}}
+.lc .lc-note{animation:lcNote 700ms ease-out var(--d,0ms) both}
+@keyframes lcNote{0%{translate:0 0;scale:.4;rotate:0deg;opacity:0}15%{opacity:1}100%{translate:var(--dx) var(--dy);scale:1.2;rotate:var(--r);opacity:0}}
+.lc .lc-gold{animation:lcGold var(--ms,1000ms) linear var(--d,0ms) both}
+@keyframes lcGold{0%{translate:0 0;rotate:0deg;opacity:0}5%{opacity:1}90%{opacity:1}100%{translate:var(--dx) var(--dy);rotate:var(--r);opacity:0}}
+/* WELL DONE */
+.lc .lc-drg{animation:lcDragon 1550ms linear both}
+.lc .lc-drg img.lc-wing{animation:lcWing 260ms steps(1) infinite}
+.lc .lc-drg img.lc-wing2{animation:lcWing2 260ms steps(1) infinite}
+@keyframes lcWing{0%{opacity:1}50%,100%{opacity:0}}
+@keyframes lcWing2{0%{opacity:0}50%,100%{opacity:1}}
+@keyframes lcDragon{0%{translate:var(--sx) var(--sy);scale:.5;opacity:0;animation-timing-function:cubic-bezier(.2,.6,.4,1)}4%{opacity:1}22%{translate:0 0;scale:1}30%{translate:4px -4px}36%{translate:-6px 2px;scale:1.06 .96}40%{translate:0 0;scale:1}66%{translate:0 0;scale:1}72%{translate:0 -6px;opacity:1;animation-timing-function:ease-in}94%{opacity:1}100%{translate:calc(var(--sx)*-1) -340px;scale:.5;opacity:0}}
+.lc .lc-fire{transform-origin:0 50%;animation:lcFire 1550ms linear both}
+@keyframes lcFire{0%,36%{scale:0 .4;opacity:0}37%{opacity:1}42%{scale:.5 1.1}48%{scale:1 1}52%{scale:1.04 .92}56%{scale:1 1.05}60%{scale:1.02 1}64%{scale:1 .96;opacity:1}70%{scale:1.1 .3;opacity:0}100%{opacity:0}}
+.lc .lc-lick{transform-origin:50% 100%;animation:lcLick 1550ms linear var(--d,0ms) both}
+@keyframes lcLick{0%,44%{scale:0;opacity:0}46%{scale:1.2;opacity:1}52%{scale:.9 1.1}58%{scale:1.1 .9}64%{scale:.95 1.05}70%{scale:1.05 .95}80%{scale:1;opacity:1}92%{scale:.7 1.3;opacity:0}100%{opacity:0}}
+.lc .lc-ember{animation:lcEmber 900ms ease-out var(--d,0ms) both}
+@keyframes lcEmber{0%{translate:0 0;opacity:0}10%{opacity:1}100%{translate:var(--dx) var(--dy);opacity:0}}
+.lc .lc-sc{animation:lcScorch 1550ms linear var(--d,0ms) both}
+@keyframes lcScorch{0%,44%{opacity:0}48%{opacity:1}88%{opacity:1}100%{opacity:0}}
+.lc .lc-dstk{transform-origin:50% 100%;animation:lcDrum 1550ms linear both}
+@keyframes lcDrum{0%,70%{translate:0 -200px;opacity:0;rotate:0deg}71%{opacity:1;animation-timing-function:cubic-bezier(.5,0,1,.5)}82%{translate:0 0;rotate:0deg;scale:1 1}84%{scale:1.3 .7}88%{scale:1 1;animation-timing-function:ease-out}92%{translate:0 -6px;rotate:-12deg;animation-timing-function:ease-in}96%{translate:0 0;rotate:0deg;opacity:1}100%{opacity:0}}
+`;document.body.appendChild(st);
+
+  /* ------------------------------------------------------------------ the box */
+  function box(html){
+    try{
+      const fx=document.getElementById('fx');if(!fx)return null;
+      if(typeof REDUCED==='function'&&REDUCED())return null;
+      const d=document.createElement('div');d.className='lc';d.innerHTML=html;
+      fx.appendChild(d);if(!window.__lcKeep)setTimeout(()=>{try{d.remove()}catch(e){}},1600);
+      return d;
+    }catch(e){return null}
+  }
+  /* a stage-wide box, or one sat under the banner */
+  const BAN_TOP=330,BAN_BOT=430;
+  const woodCSS=`background:repeating-linear-gradient(90deg,${WD} 0 7px,${WDL} 7px 9px,${WD} 9px 16px,${WDD} 16px 18px)`;
+  const stoneCSS=()=>`background:repeating-linear-gradient(180deg,${RKL} 0 2px,transparent 2px 16px,${RKD} 16px 19px),repeating-linear-gradient(90deg,transparent 0 26px,${RKD} 26px 29px),${RK}`;
+
+  /* ------------------------------------------------------------------ the twelve */
+  const CALLS=[
+    /* ---- common ---- */
+    {id:'lc_clunk',name:'THE OLD CLUNK',rarity:'common',src:'pass',sfx:'lc_clunk',
+      sfxPrompt:'A heavy brass padlock dropped onto a wooden table with a thud, then its shackle snaps shut with a deep metallic CLUNK, then a small key tinkles and bounces off it, 1.5 seconds, cartoon foley',
+      thumb(){return th('lct_clunk',P=>{blk(P,4,10,16,13,Y,YL,YD);P.r(8,15,2,2,K);P.r(8,17,2,3,K);P.r(6,2,3,9,ST);P.r(15,2,3,9,ST);P.r(7,1,10,2,ST);P.r(8,1,8,1,STL)})},
+      play(x,y,o){
+        const cx=210,cy=248;let h='';
+        h+=im('shackle',5,cx,cy-66,'lc-shk');
+        h+=im('lockbody',5,cx,cy,'lc-body');
+        h+=puffs(cx,cy+44,5,52,250);
+        h+=sparks(cx,cy-50,8,50,700,[ST,W]);
+        h+=im('key',4,cx-2,cy-64,'lc-key');
+        return box(h)}},
+    {id:'lc_gavel',name:'CASE CLOSED',rarity:'common',src:'pass',sfx:'lc_gavel',
+      sfxPrompt:'A judge\'s wooden gavel bangs three times on a sound block, the third bang louder and cracking the block in two with a wooden splinter, 1.5 seconds, cartoon courtroom',
+      thumb(){return th('lct_gavel',P=>{blk(P,2,4,9,11,WDL,'#e0a860',WD);P.r(10,8,12,3,WD);P.r(10,8,12,1,WDL);P.r(2,18,20,5,WD);P.r(2,18,20,1,WDL)})},
+      play(x,y,o){
+        const bx=190,by=500,pivX=bx+92,pivY=by-40;let h='';
+        h+=im('block',4,bx,by,'lc-bk');
+        h+=im('block2',4,bx,by,'lc-bk2');
+        /* the gavel's hand is the pivot, 94% along the sprite */
+        h+=im('gavel',4,pivX-56,pivY,'lc-gv');
+        /* the stars of each bang */
+        h+=stars(bx,by-26,3,215)+stars(bx,by-26,3,430)+stars(bx,by-26,5,700);
+        h+=puffs(bx,by+10,4,40,700);
+        /* splinters on the last bang */
+        for(let i=0;i<6;i++)h+=bit('lc-half',bx+rnd(-20,20),by,6,3,WDL,vars({dx:px(rnd(-70,70)),r:rnd(-200,200).toFixed(0)+'deg'}));
+        /* the wig lands on the block: justice has been served */
+        h+=im('wig',4,bx,by-18,'lc-wig');
+        return box(h)}},
+    {id:'lc_stamp',name:'OFFICIALLY OVER',rarity:'common',src:'pass',sfx:'lc_stamp',
+      sfxPrompt:'A big rubber stamp whooshes down and thumps onto paper with a wet ink squelch, lifts with a small sticky peel, 1.4 seconds, cartoon office foley',
+      thumb(){return th('lct_stamp',P=>{P.e(12,5,4,4,WDL);P.r(10,8,4,6,WD);blk(P,2,14,20,7,RD,'#ff7a6a',RDD);P.r(2,21,20,2,'#5a1a1a')})},
+      play(x,y,o){
+        const cx=210,cy=510,dx=x-cx,dy=y-cy,ra=(dx<0?-28:28)+'deg';let h='';
+        const rm=rnd(-12,12).toFixed(0)+'deg';
+        h+=im('mark',4,cx,cy+8,'lc-mk',vars({rm}));
+        for(let i=0;i<6;i++){const a=rnd(0,Math.PI*2),R=rnd(56,80);h+=im('splat',i%2?2:3,cx+Math.cos(a)*R,cy+8+Math.sin(a)*R*.7,'lc-splat',vars({d:(i*20)+'ms'}))}
+        h+=im('stamp',4,cx,cy-30,'lc-stp',vars({sx:px(dx*.6),sy:px(dy*.6),ra}));
+        h+=puffs(cx,cy+10,4,50,370,2);
+        return box(h)}},
+    /* ---- rare ---- */
+    {id:'lc_rope',name:'NOT ON THE LIST',rarity:'rare',src:'pass',sfx:'lc_rope',
+      sfxPrompt:'Two brass stanchions drop onto a wooden floor with heavy clanks, a velvet rope unclips and swings across with a soft whump, then a gruff goblin bouncer grunts "nope" and tuts twice, 1.5 seconds, cartoon nightclub door',
+      thumb(){return th('lct_rope',P=>{P.e(3,3,2.5,2.5,Y);P.r(2,5,2,14,YD);P.r(0,19,6,3,YD);P.e(21,3,2.5,2.5,Y);P.r(20,5,2,14,YD);P.r(18,19,6,3,YD);for(let x=4;x<20;x++){const u=(x-11.5)/8;P.r(x,Math.round(6+6*(1-u*u)),1,3,RD)}P.e(12,15,5,5,GN);P.r(8,14,3,2,K);P.r(13,14,3,2,K);P.r(8,20,8,4,'#2a2235')})},
+      play(x,y,o){
+        const cy=560,lx=70,rx=350;let h='';
+        /* two brass posts drop in, the rope swings across from the left one, the bouncer comes up in front */
+        h+=im('post',4,lx,cy-68,'lc-post',vars({d:'0ms'}))+im('post',4,rx,cy-68,'lc-post',vars({d:'70ms'}));
+        h+=puffs(lx,cy,3,36,210,2)+puffs(rx,cy,3,36,280,2);
+        h+=sparks(lx,cy-130,5,30,210,[YL,W])+sparks(rx,cy-130,5,30,280,[YL,W]);
+        h+=grp('lc-rope',lx+4,cy-122,im('rope',4,140,22,''));
+        h+=grp('lc-bnc',210,cy+40,im('bouncer',4,0,-64,''));
+        h+=bit('lc-glint nb',210-10,cy+40-98,10,10,W)+bit('lc-glint nb',210+22,cy+40-98,10,10,W);
+        return box(h)}},
+    {id:'lc_chain',name:'BALL AND CHAIN',rarity:'rare',src:'pass',sfx:'lc_chain',
+      sfxPrompt:'A heavy iron ball whistles down and lands on a wooden table with a deep boom that rattles cards, an iron cuff snaps shut with a clank and chain links rattle taut, a key turns with two clicks and is flung away whistling, 1.5 seconds, cartoon',
+      thumb(){return th('lct_chain',P=>{P.e(15,15,8.5,8.5,STD);P.shade(STD,ST,(x,y)=>x+y<24);P.e(12,12,2,1.5,STL);P.r(0,2,9,6,ST);P.r(0,2,9,1,STL);P.r(2,4,2,2,STX);P.r(5,4,2,2,STX);[[9,6],[11,8]].forEach(q=>{P.r(q[0],q[1],4,3,ST);P.p(q[0]+1,q[1]+1,null);P.p(q[0]+2,q[1]+1,null)})})},
+      play(x,y,o){
+        /* the ball lands on the table side of the caller's portrait, cuffed to it; the key is thrown away */
+        const dir=x<210?1:-1,bx=x+dir*136,by=y+34,cx=x+dir*34,cy=y+20;let h='';
+        h+=im('shadow',4,bx,by+2,'lc-shd');
+        /* chain links from the cuff to the ball, popping in one after another */
+        for(let i=0;i<4;i++){const u=.16+i*.17;h+=im('link',3,cx+(bx-cx)*u,cy+(by-12-cy)*u,'lc-link',vars({d:(i*30)+'ms'})+`;rotate:${i%2?80:10}deg`)}
+        h+=im('cuff',3,cx,cy,'lc-cuff');
+        h+=grp('lc-ball',bx,by,im('iron',4,0,-44,''),vars({sgn:dir}));
+        h+=puffs(bx,by,5,54,250)+sparks(cx,cy,6,34,270,[STL,W]);
+        h+=bit('lc-ring nb',bx,by,60,24,'transparent',vars({d:'260ms'}));
+        h+=im('key',4,cx+2,cy+4,'lc-ckey',vars({dx:px(dir*150)}));
+        return box(h)}},
+    {id:'lc_siren',name:'WEE WOO WEE WOO',rarity:'rare',src:'pass',sfx:'lc_siren',
+      sfxPrompt:'A clunky old alarm siren lamp lands with a metal clank and winds up into a wobbly cartoon wee-woo wee-woo police siren that cuts off abruptly, 1.5 seconds, 8-bit flavoured',
+      thumb(){return th('lct_siren',P=>{blk(P,3,15,18,7,STD,ST,STX);P.e(12,10,8,7,RD);P.r(4,9,16,4,RD);P.e(8,7,2.5,2.5,'#ff9a8a');P.r(1,2,2,4,Y);P.r(21,2,2,4,Y);P.r(11,0,2,3,Y)})},
+      play(x,y,o){
+        const cx=210,cy=190;let h='';
+        h+=bit('lc-wash',210,410,420,820,RD);
+        /* two beams sweeping round from the lamp, one each way */
+        h+=bit('lc-beam',cx,cy+150,120,300,`linear-gradient(180deg,rgba(255,110,90,.9),rgba(255,110,90,0))`,vars({a:'0deg'}));
+        h+=bit('lc-beam',cx,cy+150,120,300,`linear-gradient(180deg,rgba(255,110,90,.9),rgba(255,110,90,0))`,vars({a:'180deg'}));
+        h+=im('siren',4,cx,cy,'lc-sr');
+        h+=puffs(cx,cy+30,4,44,170,2);
+        /* everyone else's alarm: red ! marks at the other seats */
+        [[140,52],[52,208],[368,208],[51,585]].forEach((q,i)=>{if(Math.abs(q[0]-x)<40&&Math.abs(q[1]-(y-38))<40)return;
+          h+=im('bang',3,q[0],q[1],'lc-bang',vars({d:(i*70)+'ms'}))});
+        return box(h)}},
+    {id:'lc_cow',name:'SIT-DOWN STRIKE',rarity:'rare',src:'pass',sfx:'lc_cow',
+      sfxPrompt:'A whistling fall, a big soft thump of a cow landing and sitting on a wooden table, cards flutter, then one long contented cartoon MOO, 1.5 seconds',
+      thumb(){return th('lct_cow',P=>P.map(0,1,['.....HH........HH....','.....HWWWWWWWWWWH....','....WWWKKWWWWWKKWW...','....WIWKKWWWWWKKIW...','.....WNNNNNNNNNNW....','......WNiNNNNiNW.....','...WWWWWWWKKKWWWWWW..','..WKKWWWWWKKKWWWWKKW.','..WWWWWWWWWWWWWWWWWW.','..WWWWWdddddddWWWWWW.','..WWWWWdPPPPPdWWWWWW.','....KKK.......KKK....'],{W:W,K:'#2a2235',H:'#e8dcc0',I:K,N:PK,i:'#7a1f2a',P:PK,d:'#d9c9b0'}))},
+      play(x,y,o){
+        const cx=210,cy=560;let h='';
+        h+=im('shadow',5,cx,cy-2,'lc-shd');
+        h+=grp('lc-cow',cx,cy,im('cow',5,0,-47,'')+im('cowblink',5,0,-72,'lc-blink'));
+        /* the cards go flying */
+        for(let i=0;i<6;i++){const a=Math.PI+i/5*Math.PI,R=rnd(70,120);h+=im('card',3,cx+rnd(-30,30),cy-10,'lc-fl',vars({dx:px(Math.cos(a)*R),dy:px(Math.sin(a)*R*.8),r:rnd(-300,300).toFixed(0)+'deg',d:'270ms',ms:'900ms',g:'110px'}))}
+        h+=puffs(cx,cy-6,6,70,270);
+        h+=im('moo',4,cx+104,cy-62,'lc-moo');
+        h+=im('daisy',4,cx-36,cy-78,'lc-daisy');
+        return box(h)}},
+    /* ---- epic ---- */
+    {id:'lc_vault',name:'FORT KNOCKS',rarity:'epic',src:'pass',sfx:'lc_vault',
+      sfxPrompt:'A giant steel bank vault door rolls across a wooden floor rumbling like a bowling ball, a goblin yelps and cartwheels out of the way, the door stops with a bass thud, its handle spins with a ratchet whir, four bolts shoot home kachunk kachunk kachunk kachunk, 1.6 seconds',
+      thumb(){return th('lct_vault',P=>{P.e(12,12,11.5,11.5,STD);P.e(12,12,9.5,9.5,ST);P.e(12,12,6.5,6.5,STD);P.r(11,5,2,14,STL);P.r(5,11,14,2,STL);P.e(12,12,2.5,2.5,STX);P.shade(ST,STL,(x,y)=>x+y<14)})},
+      play(x,y,o){
+        const cx=210,cy=236,sg=sideOf(x),fx=sg*300;let h='';
+        /* a goblin in its path, who cartwheels clear just in time */
+        h+=im('gobcart',4,cx+sg*110,cy+60,'lc-gcart',vars({dx:px(-sg*200),sgn:-sg}));
+        /* the bolts hide behind the door until they shoot out */
+        [[0,'0deg'],[1,'90deg'],[2,'180deg'],[3,'270deg']].forEach(b=>{const a=b[0]*Math.PI/2;
+          h+=im('bolt',4,cx+Math.cos(a)*62,cy+Math.sin(a)*62,'lc-bolt',vars({a:b[1],dx:px(Math.cos(a)*36),dy:px(Math.sin(a)*36),d:(b[0]*40)+'ms'}))});
+        /* 300 px of rolling on an 80 px wheel is 215 degrees */
+        h+=grp('lc-vt',cx,cy,im('vault',4,0,0,'lc-roll',vars({spin:(-sg*215)+'deg'})),vars({fx:px(fx)}));
+        h+=im('spokes',4,cx,cy,'lc-spk');
+        /* the lamp: green while open, red once the bolts are home */
+        h+=bit('lc-lamp',cx-60,cy-96,16,16,GN,vars({on:1,off:0}));
+        h+=bit('lc-lamp',cx-60,cy-96,16,16,RD,vars({on:0,off:1}));
+        h+=bit('',cx-60,cy-82,22,10,STD);
+        h+=puffs(cx,cy+70,6,80,370);
+        h+=sparks(cx,cy,10,110,930,[STL,W]);
+        return box(h)}},
+    {id:'lc_hand',name:'TALK TO THE HAND',rarity:'epic',src:'pass',sfx:'lc_hand',
+      sfxPrompt:'A huge whoosh as a giant hand comes down and slaps a wooden table with an enormous meaty SMACK that rattles everything, cards flutter and fall, then a squeaky finger-wag tut tut tut, 1.6 seconds, cartoon',
+      thumb(){return th('lct_hand',P=>{P.r(5,12,15,10,GN);P.r(5,4,3,9,GN);P.r(9,1,3,12,GN);P.r(13,2,3,11,GN);P.r(17,5,3,8,GN);P.r(1,14,5,6,GN);P.r(5,12,1,10,GNL);P.r(9,1,3,1,GNL);P.r(19,12,1,10,GND);P.r(5,21,15,1,GND)})},
+      play(x,y,o){
+        const cx=210,cy=600,dx=x-cx,dy=y-cy,ra=(dx<0?-30:30)+'deg';let h='';
+        h+=im('shadow',8,cx,cy+12,'lc-hshd');
+        /* cards thrown up by the slap */
+        for(let i=0;i<9;i++){const a=Math.PI*1.1+i/8*Math.PI*.8,R=rnd(90,170);h+=im('card',3,cx+rnd(-50,50),cy,'lc-hcard',vars({dx:px(Math.cos(a)*R),dy:px(Math.sin(a)*R),r:rnd(-400,400).toFixed(0)+'deg',d:(280+i*12)+'ms',ms:(800+rnd(0,300)).toFixed(0)+'ms'}))}
+        h+=bit('lc-ring nb',cx,cy+10,90,40,'transparent',vars({d:'290ms'}));
+        h+=puffs(cx,cy+14,7,96,290);
+        h+=sparks(cx,cy,10,120,290,[YL,W]);
+        h+=im('hand',4,cx,cy-40,'lc-hd',vars({sx:px(dx*.7),sy:px(dy*.7),ra}));
+        h+=im('finger',4,cx,cy-40,'lc-hd2',vars({sx:px(dx*.7),sy:px(dy*.7)}));
+        return box(h)}},
+    {id:'lc_boards',name:'NAILED IT',rarity:'epic',src:'pass',sfx:'lc_boards',
+      sfxPrompt:'Two goblins giggle and pop up, then rapid hammering: eight quick hammer-on-nail bangs with wooden planks slapping down between them, ending with a satisfied goblin grunt, 1.6 seconds, cartoon workshop',
+      thumb(){return th('lct_boards',P=>{P.r(0,5,24,6,WD);P.r(0,5,24,1,WDL);P.r(0,10,24,1,WDD);P.r(0,14,24,6,WD);P.r(0,14,24,1,WDL);P.r(0,19,24,1,WDD);[[3,7],[20,7],[3,16],[20,16]].forEach(q=>{P.r(q[0],q[1],2,2,ST)})})},
+      play(x,y,o){
+        let h='';
+        const planks=[[210,150,-6,0],[210,270,5,110],[210,500,-4,220],[210,640,7,330]];
+        planks.forEach((p,i)=>{const sx=(i%2?-1:1)*420;
+          h+=grp('lc-plank',p[0],p[1],bit('',0,0,330,34,'',woodCSS)+bit('nb',0,-14,330,5,WDL)+bit('nb',0,15,330,4,WDD),vars({sx:px(sx),ra:p[2]+'deg',d:(140+p[3])+'ms'}));
+          [-140,140].forEach((nx,j)=>{const ny=p[1]+Math.tan(p[2]*Math.PI/180)*nx;
+            h+=im('nail',3,p[0]+nx,ny,'lc-nail',vars({d:(260+p[3]+j*50)+'ms'}));
+            h+=bit('lc-pop nb',p[0]+nx,ny,30,30,'transparent',vars({d:(260+p[3]+j*50)+'ms'})+';box-shadow:none;border:3px solid '+YL);
+            h+=stars(p[0]+nx,ny-6,2,(250+p[3]+j*50))})});
+        /* the two goblins, hammers going, thumbs up at the end */
+        [[52,790,1],[368,790,-1]].forEach((g,i)=>{
+          h+=grp('lc-gob',g[0],g[1],im('goblin',4,0,-52,'lc-swap',vars({a0:1,a1:0}))+im('gobhappy',4,0,-52,'lc-swap',vars({a0:0,a1:1})));
+          h+=grp('lc-hmr',g[0]+g[2]*42,g[1]-60,im('hammer',4,0,-20,''),`scale:${g[2]} 1`);
+          h+=im('thumb',4,g[0]+g[2]*44,g[1]-78,'lc-thumb')});
+        return box(h)}},
+    /* ---- legendary ---- */
+    {id:'lc_castle',name:'MY HOUSE, MY RULES',rarity:'legendary',src:'pass',sfx:'lc_castle',
+      sfxPrompt:'Stone towers rumble up out of the ground and lock into place with two heavy thuds, a portcullis crashes down, flags unfurl with a flap, then a triumphant royal trumpet fanfare and a shower of gold coins tinkling, 1.6 seconds, grand and silly',
+      thumb(){return th('lct_castle',P=>{P.r(1,9,6,15,RK);P.r(17,9,6,15,RK);P.r(7,13,10,11,RK);P.r(7,13,10,1,RKL);P.r(1,9,1,15,RKL);P.r(17,9,1,15,RKL);P.r(6,9,1,15,RKD);P.r(22,9,1,15,RKD);[1,4,17,20].forEach(q=>P.r(q,7,2,3,RK));[8,11,14].forEach(q=>P.r(q,11,2,3,RK));
+        P.r(10,17,4,7,STX);P.r(11,17,1,7,ST);P.r(13,17,1,7,ST);P.r(3,14,2,3,K);P.r(19,14,2,3,K);P.r(0,1,1,7,WDD);P.r(1,1,6,4,RD);P.r(1,1,6,1,'#ff7a6a');P.r(16,1,1,7,WDD);P.r(17,1,6,4,RD);P.r(17,1,6,1,'#ff7a6a');
+        P.r(9,4,6,5,Y);P.r(8,2,2,3,Y);P.r(14,2,2,3,Y);P.r(11,1,2,4,Y);P.r(9,4,6,1,YL);P.p(11,6,RD)})},
+      play(x,y,o){
+        let h='';
+        /* two towers rise out of the floor at the stage's edges: shaft, slit windows, battlements, a pole and a flag that unfurls */
+        const tower=(tx,d)=>{let g=bit('',tx,480,60,720,'',stoneCSS())+bit('nb',tx-28,480,3,720,RKL)+bit('nb',tx+28,480,3,720,RKD);
+          for(let i=0;i<3;i++)g+=bit('nb',tx,200+i*220,12,22,K)+bit('nb',tx,200+i*220-14,8,6,K);
+          g+=bit('nb',tx,126,66,8,RKD);
+          g+=im('merlon',3,tx,112,'');
+          g+=bit('',tx,50,5,100,WDD)+grp('lc-flag',tx+2,14,im('flag',6,54,0,''));
+          /* a hanging banner on the tower's face */
+          g+=bit('',tx,300,30,70,RD)+bit('nb',tx,270,34,8,WDD)+bit('nb',tx,296,14,14,Y)+bit('nb',tx-9,300,3,3,YL);
+          return grp('lc-tower',0,0,g,vars({from:'760px',d:d+'ms'}))};
+        h+=tower(30,0)+tower(390,60);
+        /* the wall across the top with its battlements and the little gate */
+        let wall=bit('',210,70,300,80,'',stoneCSS())+bit('nb',210,31,300,3,RKL);
+        for(let i=0;i<4;i++)wall+=im('merlon',4,90+i*80,30,'');
+        wall+=bit('lc-bars',210,85,100,60,`repeating-linear-gradient(90deg,transparent 0 10px,${STD} 10px 15px,${ST} 15px 18px,transparent 18px 26px)`)+bit('nb',210,57,100,6,STX)+bit('nb',210,85,100,6,STD);
+        wall+=bit('nb',210,112,120,8,RKD);
+        h+=grp('lc-wall',0,0,wall);
+        h+=puffs(30,800,3,40,320,3)+puffs(390,800,3,40,380,3)+puffs(210,120,4,70,320,3);
+        /* the fanfare */
+        [[100,170,-1],[320,170,1]].forEach((t,i)=>{h+=grp('lc-trump',t[0],t[1],im('trumpet',4,0,0,''),`scale:${t[2]} 1;`+vars({sx:px(-t[2]*160),ra:(-18*t[2])+'deg',d:(i*60)+'ms'}));
+          for(let n=0;n<4;n++)h+=im('note',3,t[0]+t[2]*44,t[1]-10,'lc-note',vars({dx:px(t[2]*rnd(20,60)),dy:px(rnd(-70,-30)),r:rnd(-40,40).toFixed(0)+'deg',d:(560+n*140+i*60)+'ms'}))});
+        /* the crown onto the caller */
+        h+=im('crown',3,x,y-38,'lc-crown');
+        h+=sparks(x,y-40,10,60,690,[YL,W]);
+        /* gold rains over the whole hall */
+        for(let i=0;i<46;i++){const gx=rnd(60,360),gy=-20,sz=i%3?10:14;h+=bit('lc-gold',gx,gy,sz,sz,i%2?Y:YL,vars({dx:px(rnd(-30,30)),dy:px(rnd(300,900)),r:rnd(-400,400).toFixed(0)+'deg',d:(560+rnd(0,520)).toFixed(0)+'ms',ms:(700+rnd(0,300)).toFixed(0)+'ms'})+`;border-radius:50%;box-shadow:0 0 0 1.5px ${K},inset -3px -3px 0 ${YD}`)}
+        return box(h)}},
+    {id:'lc_dragon',name:'WELL DONE',rarity:'legendary',src:'pass',sfx:'lc_dragon',
+      sfxPrompt:'Big leathery dragon wings beat as it swoops in, a deep breath, then a roaring blast of fire that crackles and licks across wood, the wings beat away, and a small sizzling roast chicken plops onto a plate with a ding, 1.6 seconds, cartoon',
+      thumb(){return th('lct_dragon',P=>{P.e(10,14,8,5,'#d9402a');P.e(10,16,6,2.5,'#ffd9a0');P.e(18,8,4,3.5,'#d9402a');P.r(19,9,5,2,'#d9402a');P.r(17,3,2,3,'#ffe07a');P.p(20,7,W);P.r(6,4,4,8,'#f06a4a');P.r(3,2,10,3,'#f06a4a');P.r(0,12,4,3,'#d9402a');P.r(22,10,2,2,OR)})},
+      play(x,y,o){
+        /* the dragon faces right in the sprite: from the left it comes in as drawn, from the right it is turned
+           (the flip sits on an outer group, so the animated group's translate is mirrored with it) */
+        const face=x<210?1:-1,cx=210-face*100,cy=250;let h='';
+        h+=grp('',cx,cy,grp('lc-drg',0,0,im('dragon',5,0,0,'lc-wing')+im('dragon2',5,0,0,'lc-wing2'),vars({sx:'-360px',sy:'-130px'})),`scale:${face} 1`);
+        /* fire from the mouth, across the top of the banner */
+        const mx=cx+face*118,my=cy-22;
+        h+=grp('',mx,my,grp('lc-fire',0,0,im('flame',5,70,0,'')+im('flame',4,130,8,'')+im('flame',3,175,-4,'')),`scale:${face} 1`);
+        /* flames licking along the banner's top edge, and the scorch they leave */
+        for(let i=0;i<9;i++){const lx=70+i*35;h+=im('scorch',3,lx,316,'lc-sc',vars({d:(i*30)+'ms'}));h+=im('lick',i%2?4:3,lx+rnd(-6,6),306,'lc-lick',vars({d:(i*35)+'ms'}))}
+        for(let i=0;i<18;i++)h+=bit('lc-ember nb',rnd(60,360),300,i%2?5:3,i%2?5:3,i%3?OR:YL,vars({dx:px(rnd(-20,20)),dy:px(rnd(-120,-50)),d:(650+rnd(0,500)).toFixed(0)+'ms'}));
+        /* dinner is served */
+        h+=im('drumstick',4,210,520,'lc-dstk');
+        h+=puffs(210,528,4,40,1270,2);
+        return box(h)}}
+  ];
+  CALLS.forEach(c=>{const play=c.play;c.play=function(x,y,o){try{return play.call(c,+x||210,+y||410,o||{})}catch(e){return null}};
+    const th=c.thumb;c.thumb=function(){try{return th.call(c)||''}catch(e){return ''}};
+    if(!C.calls.some(q=>q.id===c.id))C.calls.push(c)});
+  /* tests: play one by id at a seat */
+  window.__lcPlay=(id,x,y)=>{const c=C.calls.find(q=>q.id===id);return c?c.play(x==null?51:x,y==null?625:y,{mine:true,name:'YOU'}):null};
+})();
 /* ---- extras/avbg_base.js ---- */
 /* ---- extras/avbg_base.js ---- */
 /* Backgrounds for the twelve avatars that already exist (17 Nov 2026): the cast of eight and the battle pass four.
@@ -16780,14 +17343,14 @@ function openNews(force){
     rarity:i<4?'common':i<8?'rare':i<11?'epic':'legendary',src:TABLE_SHOP.includes(t.id)?'shop':'pass'})).filter(t=>t.i!==0)}
 
   /* ---------- every item of a kind ---------- */
-  const KINDS=[['av','AVATARS'],['hat','HATS'],['back','BACKS'],['front','FRONTS'],['burn','BURNS'],['pet','PETS'],['emote','EMOTES'],['title','TITLES'],['table','TABLES']];
-  const KIND_ONE={av:'AVATAR',hat:'HAT',back:'CARD BACK',front:'CARD FRONT',burn:'BURN EFFECT',pet:'TABLE PET',emote:'EMOTE',title:'TITLE',table:'HOME TABLE'};
+  const KINDS=[['av','AVATARS'],['hat','HATS'],['back','BACKS'],['front','FRONTS'],['burn','BURNS'],['pet','PETS'],['emote','EMOTES'],['title','TITLES'],['call','CALLS']]; /* 17 Nov (Billy, laptop q42): LOCKOUT calls replace home tables; tables are random every match */
+  const KIND_ONE={av:'AVATAR',hat:'HAT',back:'CARD BACK',front:'CARD FRONT',burn:'BURN EFFECT',pet:'TABLE PET',emote:'EMOTE',title:'TITLE',table:'HOME TABLE',call:'LOCKOUT CALL'};
   function cosItems(type){
     if(type==='hat')return HATS.map(h=>({id:h.id,name:h.name,rarity:h.rarity||'common',src:h.src||'old'}));
     if(type==='av')return AVATAR_NEW.map((a,i)=>({id:a.key,name:a.name,rarity:a.rarity||AV_RARITY[i]||'epic',src:a.src||'old'}));
     if(type==='back')return C.backs.map(b=>({...b}));
     if(type==='front')return C.fronts;if(type==='burn')return C.burns;if(type==='pet')return C.pets;if(type==='emote')return C.emotes;
-    if(type==='title')return TITLES.concat((window.RK_TITLES||[]).map(([id,name],i)=>({id,name,rarity:['common','common','rare','rare','epic','epic','legendary','legendary'][i],src:'rank'})));if(type==='table')return tableItems();return [];
+    if(type==='title')return TITLES.concat((window.RK_TITLES||[]).map(([id,name],i)=>({id,name,rarity:['common','common','rare','rare','epic','epic','legendary','legendary'][i],src:'rank'})));if(type==='table')return tableItems();if(type==='call')return C.calls||[];return [];
   }
   const cosFind=(type,id)=>cosItems(type).find(x=>x.id===id)||null;
   window.cosItems=cosItems;window.cosFind=cosFind;
@@ -16871,7 +17434,7 @@ function openNews(force){
   function emoteImg(e){return IMG['e'+e.id]||(IMG['e'+e.id]=e.art?sprite(16,16,e.art):'')}
   function thumbOf(k,id){const x=cosFind(k,id)||{};
     try{
-      if(k==='front'||k==='burn')return x.thumb?`<img class="q9im" src="${x.thumb()}" alt="">`:'';
+      if(k==='front'||k==='burn'||k==='call')return x.thumb?`<img class="q9im" src="${x.thumb()}" alt="">`:'';
       if(k==='pet'){const s=x.img&&x.img.n||(x.thumb&&x.thumb());return s?`<img class="q9im" src="${s}" alt="">`:''}
       if(k==='emote'){const s=emoteImg(x);return s?`<img class="q9im" src="${s}" alt="">`:''}
       if(k==='table'){const f=C.tableArt[id];return f?`<img class="q9im wide" src="${f()}" alt="">`:`<span class="q9tt">${x.name||id}</span>`}
@@ -16879,7 +17442,7 @@ function openNews(force){
     }catch(e){}
     return '';
   }
-  const NEW_K=['front','burn','pet','emote','title','table'];
+  const NEW_K=['front','burn','pet','emote','title','table','call'];
   { const n0=itemName;itemName=function(it){if(it&&NEW_K.includes(it.k)){const x=cosFind(it.k,it.id);return (x?x.name:it.id)}if(it&&it.k==='back'&&BACKS[it.i])return BACKS[it.i].name;return n0(it)};
     const t0=itemThumb;itemThumb=function(it){if(it&&NEW_K.includes(it.k))return `<span class="pth q9k-${it.k}">${thumbOf(it.k,it.id)}</span>`;
       if(it&&it.k==='back'&&!ICON.backs[it.i]&&BACKS[it.i])ICON.backs[it.i]=sprite(18,26,BACKS[it.i].draw,false);return t0(it)};
@@ -16947,7 +17510,7 @@ function openNews(force){
         el.insertAdjacentHTML('beforeend',`<span class="q9ttl">${(cosFind('title',id)||{}).name||''}</span>`)}catch(e){}}; }
 
   /* ---------- your home table opens every match you start (the last round stays the disco) ---------- */
-  { const b0=boardPlan;boardPlan=function(rounds){const o=b0.apply(this,arguments);try{const id=cosOn('table');if(!id||!o.length)return o;
+  { const b0=boardPlan;boardPlan=function(rounds){const o=b0.apply(this,arguments);try{const id=null; /* q42: no home table any more, every match's tables are random */if(!id||!o.length)return o;
       const i=THEMES.findIndex(t=>t.id===id);if(i>0&&(rounds<=1||o[o.length-1]!==i))o[0]=i}catch(e){}return o}; }
 
   /* ---------- gold for everyone at the end of a match, by placing ---------- */
@@ -17707,7 +18270,7 @@ function openNews(force){
       box.querySelectorAll('.prow').forEach(r=>{r.classList.add('q11seen');const p=r.querySelector('.pt'),t=p?parseInt(p.textContent,10):0;if(t>=40&&t%10===0)r.classList.add('q11big')});
       const nx=box.querySelector('#pnext'),pl=box.querySelector('#plist');if(nx&&pl)pl.scrollTop=Math.max(0,nx.offsetTop-pl.offsetTop-90);
     }
-    const KIND_OF={'TITLE':'title','HOME TABLE':'table','HAT':'hat','CARD BACK':'back','CARD FRONT':'front','BURN EFFECT':'burn','TABLE PET':'pet','EMOTE':'emote','AVATAR':'av'};
+    const KIND_OF={'TITLE':'title','HOME TABLE':'table','LOCKOUT CALL':'call','HAT':'hat','CARD BACK':'back','CARD FRONT':'front','BURN EFFECT':'burn','TABLE PET':'pet','EMOTE':'emote','AVATAR':'av'};
     function dressStall(){
       const box=$('stallBox');if(!box)return;const h2=box.querySelector('h2');if(!h2)return;
       if(!h2.querySelector('span')){const t=h2.textContent;h2.innerHTML='<span></span>';h2.firstChild.textContent=t;
@@ -23798,6 +24361,50 @@ renderTitle();fit();
       try{audioInit();click()}catch(x){}
       open({offer:true,then:()=>o0.call(bw,e)})}}
   window.q41Tut={open,close,steps:STEPS};
+})();
+
+/* =========================================================================
+   Q42: LOCKOUT CALL EFFECTS AT THE TABLE (17 Nov 2026, Billy, laptop). The art is Fable's (COSM.calls, lockcalls.js in the
+   EXTRAS block); the battle pass and the locker pick them up as the kind 'call' (q9: KINDS, KIND_ONE, cosItems, thumbOf,
+   NEW_K; small edits there), in the place the home tables had. Tables are random every match now (q9's home-table
+   override of boardPlan is switched off).
+   - When anyone calls LOCKOUT, their call plays at their portrait, over the game's own LOCKOUT! banner (which is kept):
+     you = your equipped call (cosOn('call')); a friend online = the call their game sent in 'hi' (lc, like q27's
+     card back); a bot = one picked for it at the start of the match (about half of them have one, mostly common).
+   - Online, the host also sends it to every friend as a table effect {k:'lcall', id, from:['seat', seat, 0]}, so the
+     whole room sees it at the right seat. Its sound is COSM.calls[i].sfx through sfxFile(): silent until the mp3s are
+     made (Billy's PC, ElevenLabs; the prompts are in laptop-changes/README.md).
+   ========================================================================= */
+(function(){
+  const L=()=>(window.COSM&&COSM.calls)||[];
+  const byId=id=>id?L().find(c=>c.id===id)||null:null;
+  const mid=pi=>{try{const S=SEATS[P(pi).seat];return {x:S.port.x+S.ps/2,y:S.port.y+S.ps/2}}catch(e){return {x:210,y:410}}};
+  function play(id,pi,mine){const c=byId(id);if(!c||typeof c.play!=='function')return false;
+    try{const m=mid(pi);c.play(m.x,m.y,{mine:!!mine,name:(P(pi)&&(P(pi).nname||P(pi).name))||''})}catch(e){return false}
+    try{if(c.sfx)sfxFile(c.sfx,.7)}catch(e){}
+    return true}
+  const mineId=()=>{try{return typeof cosOn==='function'?cosOn('call'):null}catch(e){return null}};
+  /* friends online: their call rides on 'hi', like their card back */
+  const LC_NET={};
+  { const ns=netSend;netSend=function(t,d){if(t==='hi'&&d&&typeof d==='object')d=Object.assign({},d,{lc:mineId()||''});return ns.apply(this,[t,d].concat([].slice.call(arguments,2)))}; }
+  { const no=netOn;netOn=function(m){try{if(m&&m.t==='hi'&&m.d&&typeof m.d.lc==='string')LC_NET[m.from]=byId(m.d.lc)?m.d.lc:''}catch(e){}return no.apply(this,arguments)}; }
+  /* bots: about half of them have a call, mostly the common ones */
+  const W={common:6,rare:3,epic:2,legendary:1};
+  function botPick(){const C=L();if(!C.length||Math.random()<.5)return '';let t=0;C.forEach(c=>t+=W[c.rarity]||1);let r=Math.random()*t;
+    for(const c of C){r-=W[c.rarity]||1;if(r<=0)return c.id}return C[0].id}
+  { const sm=startMatch;startMatch=function(){const r=sm.apply(this,arguments);try{(G.players||[]).forEach((p,i)=>{if(i&&p&&p.ai&&p.lcall===undefined)p.lcall=botPick()})}catch(e){}return r}; }
+  function idFor(pi){const p=P(pi);if(!p)return '';
+    if(pi===0&&!CLIENT()&&!p.ai)return mineId()||'';
+    if(p.remote)return LC_NET[p.remote]||'';
+    if(p.ai){if(p.lcall===undefined)p.lcall=botPick();return p.lcall||''}
+    return ''}
+  /* the call itself: the game's own callLockout runs untouched (banner, shake, timing) */
+  { const cl=callLockout;callLockout=function(pi){
+      try{if(!(G.auto&&G.speed>3)){const id=idFor(pi);if(id&&play(id,pi,pi===0)){try{fxPush({k:'lcall',id,from:['seat',pi,0]})}catch(e){}}}}catch(e){}
+      return cl.apply(this,arguments)}; }
+  /* a friend's phone: play the host's call at the right seat (from[] is already turned into this friend's seat numbers) */
+  { const cf=clientFx;clientFx=function(e){if(e&&e.k==='lcall'){try{const s=Array.isArray(e.from)?e.from[1]:-1;if(s>=0)play(e.id,s,s===0)}catch(x){}return}return cf.apply(this,arguments)}; }
+  window.Q42={play,byId,botPick,LC_NET};
 })();
 
 /* test hook: ?board=N starts a bot match on round N (board N), &opp=1..7 players, &speed */
