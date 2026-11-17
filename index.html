@@ -4566,6 +4566,7 @@ window.COSM=window.COSM||{fronts:[],backs:[],burns:[],pets:[],emotes:[],tableArt
     const th=c.thumb;c.thumb=function(){try{return th.call(c)||''}catch(e){return ''}};
     if(!C.calls.some(q=>q.id===c.id))C.calls.push(c)});
   /* tests: play one by id at a seat */
+  window.__LCART={ART,K,W,RD,RDD,OR,Y,YL,YD,ST,STD,STX,STL,WD,WDL,WDD,GN,GNL,GND,RK,RKL,RKD,PK,BL,BLL};   /* 17 Nov (q44): the sprites, for the new icons */
   window.__lcPlay=(id,x,y)=>{const c=C.calls.find(q=>q.id===id);return c?c.play(x==null?51:x,y==null?625:y,{mine:true,name:'YOU'}):null};
 })();
 /* ---- extras/avbg_base.js ---- */
@@ -14793,7 +14794,7 @@ const WHATS_NEW=[
     ['snap','POWER CARDS FIXED: TAPPING A CARD WHILE YOU USE A POWER NEVER SNAPS IT BY MISTAKE. THE QUEEN WORKS WITH ONE CARD.'],
     ['lock','A TURN TIMER ONLINE: 30 SECONDS A MOVE, THE LAST 10 COUNT DOWN, THEN THE GAME PLAYS FOR YOU.'],
     ['snap','SPIED ON? THE CARD NOW SAYS WHO LOOKED.'],
-    ['lock','MORE THAN 10 CARDS AND YOU FORFEIT THE MATCH. EMOTES HAVE A COOLDOWN. THE PODIUM STAYS LONGER. TABLE TAPS ARE YOURS ONLY.'],
+    ['lock','MORE THAN 10 CARDS AND YOU FORFEIT THE ROUND. EMOTES HAVE A COOLDOWN. THE PODIUM STAYS LONGER. TABLE TAPS ARE YOURS ONLY.'],
   ]},
   {v:'18nov-c',title:'CURTAIN UP',items:[
     ['snap','A NEW FRONT DOOR: THE TAVERN AT NIGHT, AND THE CURTAINS OPEN ON THE WAY IN.'],
@@ -19294,12 +19295,12 @@ function openNews(force){
   const tellAll=(t,s)=>{slam(t,s);render();netPushNow()};
 
   Object.assign(WILD,{
-    treasure:{n:1,name:'TREASURE',col:'#d9a01a',say:'a gold -2 card goes in the middle; the first correct snap takes it',
+    treasure:{n:1,name:'TREASURE',col:'#d9a01a',say:'a gold -2 card goes in the middle, locked with three keys each; every correct snap turns one of YOUR keys, and the first to three takes it',
       can:()=>!G.chest,
       ai:{want:()=>true},
       async use(pi){
-        G.chest={c:{r:'TC',s:null,id:960+Math.floor(Math.random()*30)}};SFX.extra('reveal');
-        tellAll('TREASURE CHEST!','THE FIRST CORRECT SNAP TAKES THE GOLD -2 CARD');await wait(1400);
+        G.chest={c:{r:'TC',s:null,id:960+Math.floor(Math.random()*30)},keys:{}};SFX.extra('reveal');
+        tellAll('TREASURE CHEST!','THREE CORRECT SNAPS OF YOUR OWN OPEN IT. FIRST TO THREE TAKES THE GOLD -2');await wait(1400);
       }},
     double:{n:1,name:'DOUBLE TURN',col:'#e0702a',say:'you take another turn straight after this one',
       can:pi=>G.lockoutBy===null&&!P(pi).locked,
@@ -19402,6 +19403,66 @@ function openNews(force){
         const m=portMid(t);pop('DEAL!',m.x,m.y,'#ffd84a');
       }}
   });
+  /* =========================================================================
+     WILD, ROUND THREE (17 Nov 2026, Billy, laptop): two cards after Monopoly Deal.
+     NO U! (its Just Say No): never played on your own turn. Kept in your pocket; when anyone else plays a Wild card you
+       get a few seconds to say NO U! and it is cancelled (lost, nothing happens). They, or anyone else holding one, can
+       NO U! back, and then it happens after all: the chain goes on while people have them. noU() runs in wildUse().
+     IT'S MY BIRTHDAY: everyone, you too, gets a present: one card from the deck, face down. Only the birthday player
+       peeks at theirs (Billy asked for everyone drawing; the peek is Claude's twist so it is worth playing: take it out
+       by deleting the lookOwn line).
+     ========================================================================= */
+  Object.assign(WILD,{
+    nou:{n:2,name:'NO U!',col:'#ff5a8a',say:"keep it: when someone else plays a Wild card, say NO U! and it is cancelled. They can NO U! back",
+      can:()=>false,
+      ai:{want:()=>false},
+      async use(){}},
+    birthday:{n:1,name:"IT'S MY BIRTHDAY",col:'#ff7ab0',say:'everyone, you too, gets a present: a card from the deck, face down. Only you peek at yours',
+      can:()=>touchable().length>0,
+      ai:{want:pi=>live(pi).length<=4&&Math.random()<.55},
+      async use(pi){
+        tellAll("IT'S MY BIRTHDAY!",'EVERYONE GETS A PRESENT, FACE DOWN');await wait(1000);
+        const who=inOrder(pi,touchable());let mine=-1;
+        await crit(async()=>{for(const q of who){const c=popDeck();if(!c)break;
+          let ns=P(q).slots.findIndex(x=>!x);if(ns<0){ns=P(q).slots.length;P(q).slots.push(null)}render();
+          await fly(c,DECK_R,slotRect(q,ns),false,false,440);P(q).slots[ns]=c;SFX.place();render();
+          const m=center(slotRect(q,ns));pop('A PRESENT!',m.x,m.y,'#ff9ac0');if(q===pi)mine=ns}});
+        if(mine>=0&&P(pi).slots[mine])await lookOwn(pi,mine);
+        G.players.forEach((p,q)=>{if(q!==pi&&p.ai&&Math.random()<.4)say(q,'gotburned')});
+      }}
+  });
+  /* NO U!: ask a seat (a friend online, the AI, or you here) if they want to say NO U! */
+  const NOU_MS=5000;
+  async function askNoU(q,text,k,pi,on){
+    if(P(q).remote){const v=await Promise.race([netAsk(q,'wyes',{text,label:'NO U!',title:'NO U!',no:'LET IT GO'}),new Promise(r=>setTimeout(()=>r(null),NOU_MS))]);
+      if(!v&&G.netAsk&&G.netAsk.seat===q&&G.netAsk.kind==='wyes'){G.netAsk=null;netPushNow()}return !!(v&&v.type==='wyes')}
+    if(isBot(q)){await wait(500);
+      if(on)return q===pi||Math.random()<.3;   /* it was stopped: the player who played it wants it back */
+      if(k==='lockpick')return q===G.lockoutBy;   /* a lockpick on your own LOCKOUT */
+      return Math.random()<(['xray','trade','spin','potato','bomb','shuffle','birthday','double','treasure'].includes(k)?.55:.25)}
+    const pw=G.wait,pm=G.msg;G.wait=null;G.wpanel={title:'NO U!',text,yes:'NO U!',no:'LET IT GO'};msg(text);
+    const tm=setTimeout(()=>{if(G.wait&&G.wait.wyes)resolveWait({type:'skip'})},NOU_MS);
+    const v=await waitFor({wyes:true,skip:true});clearTimeout(tm);G.wpanel=null;if(pw&&pw.gen===G.gen)G.wait=pw;msg(pm);
+    return v.type==='wyes'}
+  /* true = the Wild card is cancelled */
+  async function noU(pi,k){
+    let last=pi,on=false;
+    for(let guard=0;guard<8;guard++){
+      const who=inOrder(nextSeat(last),G.players.map((_,q)=>q).filter(q=>q!==last&&wk(P(q).pocket)==='nou'&&!(G.ff&&G.ff.has(q))));
+      let got=null;
+      for(const q of who){
+        const text=on?`<b>${nmS(last)}</b> SAID NO U! TO <b>${WILD[k].name}</b>. SAY <b>NO U!</b> BACK AND IT HAPPENS AFTER ALL?`
+                     :`<b>${nmS(pi)}</b> ${pi===0&&!CLIENT()?'PLAY':'PLAYS'} <b>${WILD[k].name}</b>. SAY <b>NO U!</b> TO CANCEL IT?`;
+        if(await askNoU(q,text,k,pi,on)){got=q;break}}
+      if(got===null)break;
+      P(got).pocket=null;on=!on;last=got;
+      (G.wlog=G.wlog||{}).nou=(G.wlog.nou||0)+1;
+      SFX.wild('nou');const m=portMid(got);pop('NO U!',m.x,m.y,'#ff5a8a');
+      slam('NO U!',on?WILD[k].name+' IS CANCELLED':'NO U BACK! '+WILD[k].name+' IS ON');render();netPushNow();await wait(1300);
+      if(P(got).ai&&Math.random()<.5)say(got,'steal');
+    }
+    return on}
+
   /* SHUFFLE, round two: everyone's own cards are mixed in their own hand (nobody is singled out) */
   Object.assign(WILD.shuffle,{say:"everyone's own cards get mixed up in their own hand",block:false,
     can:()=>touchable().some(q=>live(q).filter(s=>!shielded(q,s)).length>=2),
@@ -19424,6 +19485,7 @@ function openNews(force){
 
   /* ---------- the Treasure Chest: the gold -2 card in the middle, the first correct snap takes it ---------- */
   const chestRect=()=>({x:DECK_R.x+DECK_R.w-6,y:DECK_R.y-50,w:44,h:40});
+  const CHEST_KEYS=3;
   window.q32ChestRect=chestRect;
   { const v0=val;val=function(c){return c&&c.r==='TC'?-2:v0.apply(this,arguments)}; }
   { const c0=cardName;cardName=function(c){return c&&c.r==='TC'?'THE GOLD TREASURE CARD':c0.apply(this,arguments)}; }
@@ -19432,6 +19494,9 @@ function openNews(force){
       return `<span class="q16f q32tc"><span class="q16t" style="font-size:${Math.max(6,Math.round(w*.12))}px">TREASURE</span><b style="font-size:${Math.max(8,Math.round(w*.34))}px">-2</b></span>`}; }
   { const db=doBurnRaw;doBurnRaw=async function(bi){
       const ok=await db.apply(this,arguments);
+      /* 17 Nov (Billy, laptop): THREE KEYS EACH. Every correct snap turns one of the snapper's own keys; the first to three takes the chest */
+      try{if(ok&&G.wild&&G.chest&&!G.chest.busy&&!CLIENT()){const K=G.chest.keys=G.chest.keys&&typeof G.chest.keys==='object'?G.chest.keys:{};K[bi]=(K[bi]||0)+1;
+        if(K[bi]<CHEST_KEYS){const m=portMid(bi);pop((bi===0&&!CLIENT()?'YOUR ':'')+'KEY '+K[bi]+' OF '+CHEST_KEYS,m.x,m.y,'#ffd84a');try{SFX.lock()}catch(e){}render();netPushNow();return ok}}}catch(e){}
       try{if(ok&&G.wild&&G.chest&&!G.chest.busy&&!CLIENT()){const C=G.chest;C.busy=1;const c=C.c;
           let ns=P(bi).slots.findIndex(x=>!x);if(ns<0){ns=P(bi).slots.length;P(bi).slots.push(null)}render();
           fxPush({k:'fly',from:['ch',0,0],to:['slot',bi,ns],c:pubCard(c),f0:true,f1:true,ms:700});
@@ -19528,6 +19593,7 @@ function openNews(force){
     msg(`<b>${nmS(pi)}</b> ${pi===0&&!CLIENT()?'USE':'USES'} <b>${WILD[k].name}</b>: ${WILD[k].say.toUpperCase()}.`);
     render();await wait(500);
     SFX.wild(k);
+    if(k!=='nou'&&await noU(pi,k))return;   /* 17 Nov: NO U! */
     G.wpick=k;try{await WILD[k].use(pi)}finally{G.wpick=null;G.sel.clear();render()}
   }
   window.wildUse=wildUse;
@@ -19568,7 +19634,7 @@ function openNews(force){
     else{binIt(pi,c)}
     await wait(400);
   }
-  const RANK_AI=['treasure','lockpick','shield','double','trade','look2','xray','amnesty','potato','peekall','spin','bomb','shuffle','reverse'];
+  const RANK_AI=['treasure','lockpick','nou','shield','double','trade','look2','xray','amnesty','potato','peekall','spin','bomb','birthday','shuffle','reverse'];
   function aiFull(pi,ko,kn,cu){
     if(cu&&WILD[ko].ai.want(pi))return 'wuse';
     return RANK_AI.indexOf(kn)<RANK_AI.indexOf(ko)?'wswap':'wkeep';
@@ -19666,7 +19732,7 @@ function openNews(force){
         (face&&isW(c)?`<div class="card q16c">${faceHTML(c,r.w)}</div>`:`<div class="q16back"></div>`)+(tap?'<span class="q16use">USE</span>':'')+`</div>`});
     if(G.frozen!=null&&P(G.frozen)){const S=SEATS[P(G.frozen).seat];h+=`<div class="q16ice" style="left:${S.port.x-4}px;top:${S.port.y-4}px;width:${S.ps+8}px;height:${S.ps+8}px"></div>`}
     if(G.dir<0)h+=`<div class="q16dir">&#8634; REVERSED</div>`;
-    if(G.chest||(CLIENT()&&G.chestV)){const r=chestRect();h+=`<div class="q32chest" style="left:${r.x}px;top:${r.y}px;width:${r.w}px;height:${r.h}px" title="TREASURE: THE FIRST CORRECT SNAP TAKES THE GOLD -2 CARD"><span>-2</span></div>`}
+    if(G.chest||(CLIENT()&&G.chestV)){const r=chestRect();h+=`<div class="q32chest" style="left:${r.x}px;top:${r.y}px;width:${r.w}px;height:${r.h}px" title="TREASURE: YOUR THREE KEYS. EVERY CORRECT SNAP OF YOURS TURNS ONE; FIRST TO THREE TAKES THE GOLD -2"><span>-2</span><i class="q43keys">${[0,1,2].map(i=>`<i class="${i<(CLIENT()?(G.chestK||0):((G.chest&&G.chest.keys&&G.chest.keys[0])||0))?'on':''}"></i>`).join('')}</i></div>`}
     const left=CLIENT()?(G.wleftV||0):wildLeft();
     h+=`<div class="q16left" style="left:${DECK_R.x-10}px;top:${DECK_R.y+DECK_R.h+19}px;width:${DECK_R.w+20}px">+${left} WILD</div>`;
     /* the choice panels */
@@ -19713,13 +19779,13 @@ function openNews(force){
   { const vf=viewFor;viewFor=function(seat){const v=vf.apply(this,arguments);
       try{if(!G.wild)return v;const N=n(),R=i=>(i-seat+N)%N,H=x=>(x+seat)%N,rk=k=>{const {p,s}=unkey(k);return R(p)+':'+s};
         v.wild=1;v.pk=[];for(let x=0;x<N;x++){const i=H(x),c=P(i).pocket;v.pk.push(!c?0:i===seat?pubCard(c):1)}
-        v.chest=G.chest?1:0;v.players.forEach((pp,x)=>{const i=H(x);pp.slots=pp.slots.map((y,sl)=>{const c=P(i).slots[sl];return c&&c.r==='TC'&&y===1?pubCard(c):y})});
+        v.chest=G.chest?1:0;v.chk=G.chest&&G.chest.keys?(G.chest.keys[H(0)]||0):0;v.players.forEach((pp,x)=>{const i=H(x);pp.slots=pp.slots.map((y,sl)=>{const c=P(i).slots[sl];return c&&c.r==='TC'&&y===1?pubCard(c):y})});
         v.wsh=[...(G.wsh||[])].map(rk);v.dir=G.dir||1;v.frz=G.frozen==null?-1:R(G.frozen);v.wleft=wildLeft();
         if(v.ask&&v.ask.opts&&v.ask.opts.keys)v.ask={...v.ask,opts:{...v.ask.opts,keys:v.ask.opts.keys.map(rk)}};
         if(v.ask&&v.ask.kind==='wblock'&&typeof v.ask.opts.by==='number')v.ask={...v.ask,opts:{...v.ask.opts,by:R(v.ask.opts.by)}};
       }catch(e){console.error('q16 view',e)}return v}; }
   { const cv=clientView;clientView=function(v){
-      G.wildView=!!v.wild;G.wild=!!v.wild;G.chestV=!!v.chest;G.wsh=new Set(v.wsh||[]);G.dir=v.dir||1;G.wleftV=v.wleft||0;
+      G.wildView=!!v.wild;G.wild=!!v.wild;G.chestV=!!v.chest;G.chestK=v.chk||0;G.wsh=new Set(v.wsh||[]);G.dir=v.dir||1;G.wleftV=v.wleft||0;
       const r=cv.apply(this,arguments);
       try{if(v.wild){G.frozen=v.frz>=0?v.frz:null;G.players.forEach((p,i)=>{const x=v.pk&&v.pk[i];p.pocket=!x?null:x===1?{back:1}:x});render()}}catch(e){}
       return r}; }
@@ -19741,7 +19807,7 @@ function openNews(force){
   { const ov=document.createElement('div');ov.id='q16ch';ov.className='ov';ov.hidden=true;
     ov.innerHTML=`<div class="q16chbox"><div class="q16chh" id="q16chH">QUICK PLAY</div><div class="q16chs">HOW DO YOU WANT TO PLAY?</div>
       <button class="btn y q16chb" id="btnStandard"><span class="q16cht">STANDARD</span><span class="q16chd">PLAIN LOCKOUT. JUST YOU, YOUR MEMORY AND THE DECK.</span></button>
-      <button class="btn g q16chb" id="btnWild"><span class="q16wl q16cht">WILD</span><span class="q16chd">FOURTEEN WILD CARDS: TREASURE CHEST, HOT POTATO, TRADE OFFER AND MORE. SAVE THEM IN YOUR POCKET.</span></button>
+      <button class="btn g q16chb" id="btnWild"><span class="q16wl q16cht">WILD</span><span class="q16chd">SIXTEEN WILD CARDS: TREASURE CHEST, NO U!, TRADE OFFER AND MORE. SAVE THEM IN YOUR POCKET.</span></button>
       <button class="btn gy" id="q16chBack">BACK</button></div>`;
     ($('pass')||$('stage')).insertAdjacentElement('afterend',ov);
     let pend=null;
@@ -23463,7 +23529,7 @@ ${[0,1,2,3,4,5,6].map(i=>`#gate .crowd img:nth-of-type(${i+1}){left:${47+i*46}px
   }
 
   /* ------------------------------------------------------------ 4. too many cards: forfeit */
-  { const pr=playRound;playRound=async function(){if(G.round===0||!G.ff)G.ff=new Set();return pr.apply(this,arguments)}; }
+  { const pr=playRound;playRound=async function(){G.ff=new Set();return pr.apply(this,arguments)}; }   /* 17 Nov (Billy, laptop): a forfeit lasts the round, not the match */
   window.ffScore=(sc)=>{try{if(G.ff)G.ff.forEach(i=>{if(sc[i]!=null)sc[i]=Math.max(sc[i],FF_SCORE)})}catch(e){}return sc};
   { const db=doBurnRaw;doBurnRaw=async function(bi){
       const ok=await db.apply(this,arguments);
@@ -23471,7 +23537,7 @@ ${[0,1,2,3,4,5,6].map(i=>`#gate .crowd img:nth-of-type(${i+1}){left:${47+i*46}px
         if(!ok&&G.ff&&!G.ff.has(bi)&&live(bi).length>FF_CARDS){
           G.ff.add(bi);const pl=P(bi);pl.locked=true;
           const nm=bi===0&&!CLIENT()&&NET.role!=='host'?'YOU':(pl.nname||pl.name);
-          slam('FORFEIT!',nm+' HAS MORE THAN '+FF_CARDS+' CARDS AND IS OUT OF THE MATCH');render();
+          slam('FORFEIT!',nm+' HAS MORE THAN '+FF_CARDS+' CARDS AND IS OUT FOR THIS ROUND');render();
           if(typeof netPushNow==='function')netPushNow();
         }
       }catch(e){}
@@ -23484,9 +23550,9 @@ ${[0,1,2,3,4,5,6].map(i=>`#gate .crowd img:nth-of-type(${i+1}){left:${47+i*46}px
   { const h=humanTurn;humanTurn=async function(){if(await ffSkip(0))return;return h.apply(this,arguments)}; }
   { const a=aiTurn;aiTurn=async function(pi){if(await ffSkip(pi))return;return a.apply(this,arguments)}; }
   { const r=remoteTurn;remoteTurn=async function(pi){if(await ffSkip(pi))return;return r.apply(this,arguments)}; }
-  /* a forfeited player stays locked in later rounds */
+  /* 17 Nov (Billy): a forfeited player plays again next round (was: stayed locked all match) */
   { const pr=playRound;playRound=async function(){
-      const iv=setInterval(()=>{try{if(G.ff)G.ff.forEach(i=>{if(P(i)&&!P(i).locked&&!G.readyWait)P(i).locked=true})}catch(e){}},300);
+      const iv=setInterval(()=>{try{if(G.ff)G.ff.forEach(i=>{if(P(i)&&!P(i).locked&&!G.readyWait&&G.inGame)P(i).locked=true})}catch(e){}},300);
       try{return await pr.apply(this,arguments)}finally{clearInterval(iv)}}; }
 
   const st=document.createElement('style');st.textContent=`
@@ -24214,7 +24280,7 @@ renderTitle();fit();
     opp:[{c:C('9','s')},{c:C('4','d')},{c:C('J','c')},{c:C('6','h')}],disc:C('10','h'),drawn:null,pocket:null,mid:null,mood:'n',
     oppPk:true,panel:null,left:14,glowLeft:false,glowPk:false,banner:null});
   const STEPS=[
-    {les:1,m:S=>{S.glowLeft=true;S.mood='h'},say:"PSST. WILD IS LOCKOUT WITH THE GLOVES OFF. SAME RULES, <b>LOWEST SCORE WINS</b>, BUT <b>FOURTEEN WILD CARDS</b> ARE HIDING IN THE DECK. SEE THE COUNT UNDER IT?",
+    {les:1,m:S=>{S.glowLeft=true;S.mood='h'},say:"PSST. WILD IS LOCKOUT WITH THE GLOVES OFF. SAME RULES, <b>LOWEST SCORE WINS</b>, BUT <b>SIXTEEN WILD CARDS</b> ARE HIDING IN THE DECK. SEE THE COUNT UNDER IT?",
       hint:'WILD CARDS LEFT IN THE DECK',btn:['NEXT','g pulse']},
     {les:2,m:S=>{S.glowLeft=false;S.mood='n'},say:"YOUR TURN. DRAW A CARD. GO ON, I WON'T LOOK. MUCH.",hint:'TAP THE DECK',taps:['deck'],
       tap:async S=>{snd('draw');await fly(W('double'),DECK_R,HAND_R,true)}},
@@ -24407,6 +24473,226 @@ renderTitle();fit();
   window.Q42={play,byId,botPick,LC_NET};
 })();
 
+/* ---- q43_wild3.js ---- */
+/* =========================================================================
+   Q43: WILD, ROUND THREE, THE LOOK (17 Nov 2026, Billy, laptop). The rules are in-place edits inside q16 (see README):
+   the Treasure Chest's three keys, NO U! and IT'S MY BIRTHDAY. This block only dresses them:
+   1. two 18 x 18 pictures through Q17KIT.add() (q17's faces and bursts pick them up), in q33's style:
+      NO U!: a goblin's hand mirror, and the lightning bolt aimed at him bouncing back off it;
+      IT'S MY BIRTHDAY: a present with a party hat on, and a pair of eyes peeking out from under the lid.
+   2. the chest's three keys (.q43keys under .q32chest; a key goes gold for every correct snap)
+   3. the What's New entry.
+   ========================================================================= */
+(function(){
+  const Q=window.Q17KIT;if(!Q||!window.WILD)return;
+  const {leaf,K,W,GD,GL,GK,V2,V3}=Q;
+  const PK='#ff5a8a',PKL='#ff9ac0',PKD='#c0306a',GN='#6fd13c',GND='#3f9a2a',BL='#9fe8ff',BLD='#56a6f0',SIL='#c9cede',SILD='#878da4';
+  // NO U!: a goblin hides behind a hand mirror; the bolt aimed at him bounces off it and heads back the other way
+  Q.add('nou',P=>{
+    /* the mirror: silver rim, blue glass, a shine; the handle down to the goblin's fist */
+    P.e(11,7,5.5,6.5,SILD);P.e(11,7,4.5,5.5,SIL);P.e(11,7,3.5,4.5,BLD);P.shade(BLD,BL,(x,y)=>x+y<17);
+    P.r(9,4,1,3,W);P.p(10,3,W);
+    P.r(10,13,2,3,'#a8703c');P.p(10,13,'#c98a4a');
+    /* the goblin peeking round it: one ear, one eye, a grin */
+    P.r(14,10,3,4,GN);P.p(16,9,GN);P.p(17,8,GN);P.r(14,13,3,1,GND);P.p(15,11,W);P.p(15,12,K);P.r(14,13,2,1,K);
+    P.r(10,15,3,2,GN);P.p(12,16,GND);
+    /* the bolt: in from the left, a spark on the glass, and off back up the way it came */
+    [[0,9],[1,9],[2,10],[3,10],[4,9],[5,9]].forEach(([x,y])=>P.p(x,y,GD));[[1,8],[3,9]].forEach(([x,y])=>P.p(x,y,GL));
+    P.p(6,8,W);P.p(6,6,W);P.p(5,7,W);P.p(7,7,W);
+    [[5,5],[4,4],[3,4],[2,3],[1,2],[0,2]].forEach(([x,y])=>P.p(x,y,PK));P.p(1,1,PK);P.p(0,3,PK);P.p(2,4,PKL);
+    P.p(17,1,W);P.p(16,2,W);P.p(17,3,W)});
+  // IT'S MY BIRTHDAY: a present in a party hat, and something inside it is looking at you
+  Q.add('birthday',P=>{
+    /* the box */
+    P.r(2,9,14,8,PK);P.r(2,9,14,1,PKL);P.r(2,9,1,8,PKL);P.r(15,9,1,8,PKD);P.r(2,16,14,1,PKD);
+    P.r(8,9,2,8,GD);P.p(8,9,GL);P.r(9,10,1,7,GK);
+    /* the lid, lifted a crack: two eyes in the dark */
+    P.r(1,6,16,3,PKL);P.r(1,8,16,1,PK);P.r(16,6,1,3,PKD);P.r(8,6,2,3,GD);P.p(8,6,GL);
+    P.r(3,9,4,1,'#2a0c1c');P.r(11,9,4,1,'#2a0c1c');P.p(4,9,W);P.p(12,9,W);
+    /* the bow */
+    P.r(6,4,2,2,GD);P.r(10,4,2,2,GD);P.r(8,5,2,1,GL);P.p(6,4,GL);P.p(11,4,GK);
+    /* the party hat on top, a bit skew, with a pom-pom */
+    P.r(12,3,3,1,BLD);P.r(12,2,2,1,BL);P.p(13,1,BLD);P.p(13,0,W);P.p(12,2,W);
+    /* confetti */
+    P.p(0,2,GN);P.p(3,1,PKL);P.p(16,5,GN);P.p(1,12,BL);P.p(17,13,GL);
+    leaf(P,1,17,-2.4,2,1);P.p(2,17,V2)});
+
+  /* the chest's three keys */
+  const st=document.createElement('style');st.textContent=`
+.q32chest .q43keys{position:absolute;left:50%;bottom:-12px;translate:-50% 0;display:flex;gap:3px;z-index:2;pointer-events:none}
+.q32chest .q43keys i{display:block;width:14px;height:8px;background:#8a7a68;box-shadow:0 0 0 1px #000;
+  clip-path:polygon(0 0,40% 0,40% 35%,100% 35%,100% 65%,85% 65%,85% 100%,70% 100%,70% 65%,40% 65%,40% 100%,0 100%)}
+.q32chest .q43keys i.on{background:#ffd84a;box-shadow:0 0 0 1px #000;animation:q43key .4s ease-out}
+@keyframes q43key{0%{scale:2;rotate:-30deg}100%{scale:1;rotate:0deg}}
+@media (prefers-reduced-motion:reduce){.q32chest .q43keys i.on{animation:none}}`;
+  document.head.appendChild(st);
+
+  try{WHATS_NEW.unshift({v:'21nov-laptop',title:'WILD, ROUND THREE',items:[
+    ['snap','NO U!: KEEP IT IN YOUR POCKET. WHEN SOMEONE PLAYS A WILD CARD, SAY NO U! AND IT IS CANCELLED. THEY CAN NO U! BACK.'],
+    ['snap',"IT'S MY BIRTHDAY: EVERYONE GETS A PRESENT, A CARD FACE DOWN. ONLY THE BIRTHDAY PLAYER PEEKS AT THEIRS."],
+    ['lock','THE TREASURE CHEST NOW HAS THREE KEYS EACH: EVERY CORRECT SNAP TURNS ONE OF YOURS. FIRST TO THREE TAKES THE GOLD -2.'],
+    ['lock','GOT FORFEITED FOR TOO MANY CARDS? YOU ARE BACK IN THE NEXT ROUND.'],
+  ]})}catch(e){}
+})();
+/* ---- q44_callfx.js ---- */
+/* =========================================================================
+   Q44: THE LOCKOUT CALLS, REBUILT (17 Nov 2026, Billy, laptop, Opus). Billy: Fable's twelve calls (lockcalls.js) "aren't up
+   to the quality I'd like"; rebuild them on Opus keeping Fable's art. Every call's own play() still runs as drawn; this wraps it:
+   1. BIGGER: the effect's own box is scaled about its focus (CF[id].c, CF[id].s), so the hero fills the table, not a corner.
+   2. IMPACT, timed to Fable's keyframes (CF[id].hits [ms, x, y, size 1-3]): the stage shakes (WAAPI on #stage's `translate`,
+      which leaves its fitting transform alone), a white flash, two shock rings, speed lines on a big hit, chunky debris in the
+      call's own colours (CF[id].cols), and dust.
+   3. RARITY: rare and up get a spotlight that dims the table round the hero; epic adds a second ring of rays; legendary gets
+      gold rays turning behind the hero and a shower of sparkles.
+   4. THE NAME: a plate under the LOCKOUT! banner says whose call it is and its name, in the rarity's colour.
+   5. NEW ICONS: each call's thumb() is a 40 x 40 badge in its rarity's colours with the call's own sprites laid on it.
+   All of it is CSS transform / opacity on HTML (iPhone Safari), gone at 1.7 s, and off under REDUCED() like Fable's.
+   A new call: a COSM.calls row (Fable's contract) plus a CF row (and an ICON row) here.
+   ========================================================================= */
+(function(){
+  const C=window.COSM,A=window.__LCART;if(!C||!C.calls||!A)return;
+  const {ART,K,W,RD,OR,Y,YL,YD,ST,STD,STL,WD,WDL,WDD,GN,GNL,RK,RKL,RKD,PK}=A;
+  const R={common:{b:'#5f7088',l:'#9db0c8',d:'#323d4f',t:'COMMON'},rare:{b:'#2f6fd0',l:'#7ab4ff',d:'#173a7a',t:'RARE'},
+           epic:{b:'#8540c0',l:'#cf96ff',d:'#43206a',t:'EPIC'},legendary:{b:'#e09a18',l:'#ffe27a',d:'#8a5800',t:'LEGENDARY'}};
+  const rnd=(a,b)=>a+Math.random()*(b-a),px=n=>Math.round(n)+'px';
+  const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+  /* ------------------------------------------------------------------ the table: focus, scale, hits, debris colours */
+  const CF={
+    lc_clunk:{c:[210,268],s:1.45,cols:[Y,YD,ST,W],hits:[[248,210,292,3],[700,210,205,1]]},
+    lc_gavel:{c:[190,470],s:1.45,cols:[WD,WDL,WDD,W],hits:[[217,190,488,1],[434,190,488,1],[713,190,488,3]]},
+    lc_stamp:{c:[210,500],s:1.35,cols:[RD,'#ff7a6a','#7a1a2a',W],hits:[[372,210,515,3]]},
+    lc_rope:{c:[210,505],s:1.15,cols:[Y,YD,RD,W],hits:[[217,70,560,2],[287,350,560,2],[560,210,560,1]]},
+    lc_chain:{c:null,s:1.3,cols:[ST,STD,STL,WD],hits:null},
+    lc_siren:{c:[210,200],s:1.45,cols:[RD,Y,W,ST],hits:[[186,210,218,2]]},
+    lc_cow:{c:[210,540],s:1.35,cols:[W,'#2a2235',PK,'#d9c9b0'],hits:[[279,210,560,3]]},
+    lc_vault:{c:[210,236],s:1.15,cols:[ST,STL,STD,W],hits:[[372,210,300,3],[945,190,236,1],[990,230,236,1]]},
+    lc_hand:{c:[210,580],s:1.2,cols:[GN,GNL,W,WD],hits:[[279,210,612,3]]},
+    lc_boards:{c:null,f:[210,420],s:1,cols:[WD,WDL,WDD,W],hits:[[248,210,150,1],[358,210,270,1],[468,210,500,2],[578,210,640,2]]},
+    lc_castle:{c:null,f:[210,300],s:1,cols:[RK,RKL,RKD,Y],hits:[[341,30,780,3],[400,390,780,2],[682,null,null,1]]},
+    lc_dragon:{c:null,f:[230,290],s:1,cols:[OR,Y,RD,'#2a1a10'],hits:[[573,210,300,2],[660,150,305,1],[760,270,305,1],[860,190,305,1],[960,240,305,1]]},
+  };
+
+  /* ------------------------------------------------------------------ styles */
+  const st=document.createElement('style');st.textContent=`
+.lj{position:absolute;left:0;top:0;width:0;height:0;pointer-events:none;z-index:63}
+.lj>*{position:absolute;display:block;pointer-events:none}
+.lj .lj-dim{left:0;top:0;width:420px;height:820px;animation:ljDim 1650ms linear both}
+@keyframes ljDim{0%{opacity:0}10%{opacity:1}82%{opacity:1}100%{opacity:0}}
+.lj .lj-rays{border-radius:50%;animation:ljRays 1650ms linear both;
+  -webkit-mask:radial-gradient(closest-side,#000 30%,transparent 100%);mask:radial-gradient(closest-side,#000 30%,transparent 100%)}
+@keyframes ljRays{0%{scale:.3;rotate:0deg;opacity:0}14%{scale:1;opacity:.6}80%{opacity:.6}100%{scale:1.15;rotate:var(--spin,70deg);opacity:0}}
+.lj .lj-flash{left:0;top:0;width:420px;height:820px;background:#fffaf0;opacity:0;animation:ljFlash 260ms ease-out var(--d) forwards}
+@keyframes ljFlash{0%{opacity:var(--o)}100%{opacity:0}}
+.lj .lj-ring{border:var(--bw,6px) solid var(--rc,#fff3a0);border-radius:50%;box-shadow:0 0 0 2px #1a1030,inset 0 0 0 2px #1a1030;opacity:0;
+  animation:ljRing 520ms cubic-bezier(.1,.7,.3,1) var(--d) forwards}
+@keyframes ljRing{0%{scale:.15;opacity:1}70%{opacity:.9}100%{scale:1;opacity:0}}
+.lj .lj-line{height:6px;background:#fffaf0;box-shadow:0 0 0 2px #1a1030;transform-origin:0 50%;opacity:0;animation:ljLine 300ms ease-out var(--d) forwards}
+@keyframes ljLine{0%{scale:0 1;opacity:1}55%{scale:1 1;opacity:1}100%{scale:1 .2;translate:var(--lx) var(--ly);opacity:0}}
+.lj .lj-chunk{box-shadow:0 0 0 2px #1a1030,inset -3px -3px 0 rgba(0,0,0,.28),inset 2px 2px 0 rgba(255,255,255,.35);opacity:0;
+  animation:ljChunk var(--ms,700ms) linear var(--d) forwards}
+@keyframes ljChunk{0%{translate:0 0;rotate:0deg;opacity:1;animation-timing-function:cubic-bezier(.2,.8,.5,1)}45%{translate:var(--dx) var(--dy);animation-timing-function:cubic-bezier(.5,0,1,.6)}
+  88%{opacity:1}100%{translate:calc(var(--dx)*1.35) calc(var(--dy) + var(--g,140px));rotate:var(--r);opacity:0}}
+.lj .lj-dust{background:#efe4cc;border-radius:3px;box-shadow:0 0 0 2px #1a1030,inset -4px -4px 0 #c9b894;opacity:0;animation:ljDust var(--ms,600ms) ease-out var(--d) forwards}
+@keyframes ljDust{0%{translate:0 0;scale:.3;opacity:1}100%{translate:var(--dx) var(--dy);scale:var(--s,1.6);opacity:0}}
+.lj .lj-spark{width:10px;height:10px;background:#fff3a0;box-shadow:0 0 0 2px #1a1030;clip-path:polygon(50% 0,62% 38%,100% 50%,62% 62%,50% 100%,38% 62%,0 50%,38% 38%);
+  opacity:0;animation:ljSpark 700ms ease-in-out var(--d) forwards}
+@keyframes ljSpark{0%,100%{scale:0;rotate:0deg;opacity:0}40%{scale:var(--s,1.6);rotate:60deg;opacity:1}}
+.lj .lj-plate{left:210px;top:466px;translate:-50% 0;white-space:nowrap;padding:5px 12px 4px;font-family:var(--pix,monospace);font-size:13px;line-height:1;
+  color:#fffaf0;text-shadow:0 2px 0 #1a1030;background:var(--pb);box-shadow:0 0 0 3px #1a1030,inset 0 3px 0 var(--pl),inset 0 -4px 0 var(--pd),0 5px 0 3px rgba(13,10,24,.45);
+  text-align:center;opacity:0;animation:ljPlate 1600ms linear both}
+.lj .lj-plate small{display:block;font-size:8px;letter-spacing:1px;color:var(--pl);margin-bottom:3px;text-shadow:0 1px 0 #1a1030}
+@keyframes ljPlate{0%,14%{scale:0 1;opacity:0}15%{opacity:1;animation-timing-function:cubic-bezier(.3,1.6,.6,1)}24%{scale:1 1}80%{scale:1 1;opacity:1;animation-timing-function:ease-in}90%,100%{scale:1 0;opacity:0}}
+.lc.lj-big{transition:none}
+`;document.head.appendChild(st);
+
+  /* ------------------------------------------------------------------ the pieces */
+  const stage=()=>document.getElementById('stage');
+  function shake(t,size){
+    const el=stage();if(!el||!el.animate)return;const a=[0,3,6,10][size]||3;
+    try{el.animate([{translate:'0 0'},{translate:`${a}px ${-a*.7}px`},{translate:`${-a}px ${a*.5}px`},{translate:`${a*.6}px ${a*.4}px`},{translate:`${-a*.4}px ${-a*.3}px`},{translate:'0 0'}],
+      {duration:size>=3?320:220,delay:t,easing:'linear',composite:'replace'})}catch(e){}}
+  function hit(t,x,y,size,cols){
+    let h='';const D=v=>`--d:${Math.round(v)}ms`;
+    if(size>=2)h+=`<i class="lj-flash" style="${D(t)};--o:${size>=3?.55:.3}"></i>`;
+    const rw=[0,70,120,180][size];
+    h+=`<i class="lj-ring" style="left:${px(x-rw/2)};top:${px(y-rw/4)};width:${px(rw)};height:${px(rw/2)};${D(t)}"></i>`;
+    if(size>=2)h+=`<i class="lj-ring" style="left:${px(x-rw*.7)};top:${px(y-rw*.35)};width:${px(rw*1.4)};height:${px(rw*.7)};--rc:#fffaf0;--bw:4px;${D(t+70)}"></i>`;
+    if(size>=3)for(let i=0;i<12;i++){const a=i/12*Math.PI*2+rnd(-.12,.12),r0=46,len=rnd(40,70);
+      h+=`<i class="lj-line" style="left:${px(x+Math.cos(a)*r0)};top:${px(y+Math.sin(a)*r0*.6)};width:${px(len)};rotate:${(a*180/Math.PI).toFixed(0)}deg;--lx:${px(Math.cos(a)*30)};--ly:${px(Math.sin(a)*18)};${D(t+10)}"></i>`}
+    const nc=[0,6,10,16][size];
+    for(let i=0;i<nc;i++){const a=-Math.PI*rnd(.08,.92),R=rnd(50,130)*(size>=3?1.2:.8),sz=Math.round(rnd(7,size>=3?17:12));
+      h+=`<i class="lj-chunk" style="left:${px(x-sz/2)};top:${px(y-sz/2)};width:${sz}px;height:${sz}px;background:${cols[i%cols.length]};--dx:${px(Math.cos(a)*R)};--dy:${px(Math.sin(a)*R*.8)};--r:${rnd(-540,540).toFixed(0)}deg;--ms:${(600+rnd(0,300)).toFixed(0)}ms;${D(t+rnd(0,40))}"></i>`}
+    const nd=[0,3,5,7][size];
+    for(let i=0;i<nd;i++){const s=rnd(14,24),dir=i%2?1:-1;
+      h+=`<i class="lj-dust" style="left:${px(x-s/2)};top:${px(y-s/2+6)};width:${px(s)};height:${px(s*.7)};--dx:${px(dir*rnd(30,90))};--dy:${px(rnd(-26,-6))};--s:${rnd(1.4,2.2).toFixed(2)};--ms:${(520+rnd(0,260)).toFixed(0)}ms;${D(t+rnd(10,70))}"></i>`}
+    shake(t,size);
+    return h}
+
+  function juice(c,d,x,y,o){
+    const fx=document.getElementById('fx');if(!fx||!d)return;
+    const cf=CF[c.id]||{s:1,cols:[W,Y],hits:[]},rar=R[c.rarity]||R.common;
+    /* where it happens: the chain lands by the caller, the castle's crown is the caller's */
+    let ctr=cf.c,hits=cf.hits||[];
+    if(c.id==='lc_chain'){const dir=x<210?1:-1,bx=x+dir*136,by=y+34;ctr=[bx,by-20];hits=[[248,bx,by,3]]}
+    if(c.id==='lc_castle')hits=hits.map(q=>q[1]==null?[q[0],x,y-38,q[3]]:q);
+    /* 1. bigger, about the focus */
+    if(ctr&&cf.s&&cf.s!==1){d.style.transformOrigin=`${ctr[0]}px ${ctr[1]}px`;d.style.scale=String(cf.s);d.classList.add('lj-big')}
+    const fp=cf.f||ctr||(hits[0]?[hits[0][1],hits[0][2]]:[210,410]);
+    let h='';
+    /* 3. rarity */
+    if(c.rarity!=='common')h+=`<i class="lj-dim" style="background:radial-gradient(circle at ${fp[0]}px ${fp[1]}px,rgba(10,4,20,0) 0,rgba(10,4,20,0) ${c.rarity==='rare'?150:120}px,rgba(10,4,20,${c.rarity==='legendary'?.62:.5}) ${c.rarity==='rare'?300:250}px)"></i>`;
+    if(c.rarity==='epic'||c.rarity==='legendary'){const sz=c.rarity==='legendary'?620:440,col=c.rarity==='legendary'?'rgba(255,214,90,.55)':'rgba(207,150,255,.45)';
+      h+=`<i class="lj-rays" style="left:${px(fp[0]-sz/2)};top:${px(fp[1]-sz/2)};width:${sz}px;height:${sz}px;background:repeating-conic-gradient(${col} 0 9deg,transparent 9deg 22deg);--spin:${c.rarity==='legendary'?90:50}deg"></i>`}
+    if(c.rarity==='legendary')for(let i=0;i<14;i++){const a=rnd(0,Math.PI*2),r=rnd(60,190);
+      h+=`<i class="lj-spark" style="left:${px(fp[0]+Math.cos(a)*r-5)};top:${px(fp[1]+Math.sin(a)*r*.8-5)};--s:${rnd(1.2,2.4).toFixed(2)};--d:${Math.round(rnd(250,1200))}ms"></i>`}
+    /* 2. impact */
+    hits.forEach(q=>{h+=hit(q[0],q[1],q[2],q[3],cf.cols)});
+    /* 4. the name plate */
+    const who=o&&o.mine?'YOUR CALL':(o&&o.name?esc(String(o.name).toUpperCase())+"'S CALL":rar.t+' CALL');
+    h+=`<b class="lj-plate" style="--pb:${rar.b};--pl:${rar.l};--pd:${rar.d}"><small>${who}</small>${esc(c.name)}</b>`;
+    const j=document.createElement('div');j.className='lj';j.innerHTML=h;fx.insertBefore(j,d);
+    if(!window.__lcKeep)setTimeout(()=>{try{j.remove()}catch(e){}},1700);
+  }
+
+  C.calls.forEach(c=>{if(c.__q44)return;c.__q44=1;const p0=c.play;
+    c.play=function(x,y,o){const d=p0.apply(this,arguments);try{x=+x||210;y=+y||410;juice(c,d,x,y,o||{})}catch(e){console.error('q44',e)}return d}});
+
+  /* ------------------------------------------------------------------ 5. the icons: a badge and the call's own sprites */
+  const ICON_N=40;
+  function lay(g,k,dx,dy){const a=ART[k];if(!a)return;const w=a[0]+2,hh=a[1]+2,s=grid(w,hh),P=painter(s);
+    a[2]({p:(x,y,c)=>P.p(x+1,y+1,c),r:(x,y,w,h,c)=>P.r(x+1,y+1,w,h,c),e:(cx,cy,rx,ry,c)=>P.e(cx+1,cy+1,rx,ry,c),
+      map:(x0,y0,rows,pal)=>P.map(x0+1,y0+1,rows,pal),shade:(f,t,pr)=>P.shade(f,t,(x,y)=>pr(x-1,y-1)),recolor:m=>P.recolor(m)});
+    const o=a[3]===false?s:outline(s);
+    for(let y=0;y<hh;y++)for(let x=0;x<w;x++){const v=o[y][x];if(v==null)continue;const X=dx+x-1,Y=dy+y-1;if(X>=0&&Y>=0&&X<ICON_N&&Y<ICON_N)g[Y][X]=v}}
+  function badge(g,rar){const P=painter(g),r=R[rar]||R.common,N=ICON_N;
+    P.r(0,0,N,N,K);P.r(1,1,N-2,N-2,r.d);P.r(2,2,N-4,N-4,r.b);
+    if(rar==='epic'||rar==='legendary')for(let y=2;y<N-2;y++)for(let x=2;x<N-2;x++){const a=Math.atan2(y-N/2,x-N/2);if(Math.floor((a+Math.PI)/(Math.PI/8))%2===0)P.p(x,y,r.l)}
+    else for(let y=2;y<N-2;y++)for(let x=2;x<N-2;x++)if((x+y)%6===0)P.p(x,y,r.d);
+    P.r(2,2,N-4,1,r.l);P.r(2,2,1,N-4,r.l);P.r(2,N-3,N-4,1,r.d);P.r(N-3,2,1,N-4,r.d);
+    if(rar==='legendary'){P.r(1,1,3,3,YL);P.r(N-4,1,3,3,YL);P.r(1,N-4,3,3,YL);P.r(N-4,N-4,3,3,YL)}}
+  const ICON={
+    lc_clunk:g=>{lay(g,'shackle',13,3);lay(g,'lockbody',10,13);lay(g,'key',22,27)},
+    lc_gavel:g=>{lay(g,'block',9,27);lay(g,'gavel',4,9);lay(g,'star',26,20)},
+    lc_stamp:g=>{lay(g,'mark',6,12);lay(g,'stamp',9,1)},
+    lc_rope:g=>{lay(g,'post',0,5);lay(g,'post',27,5);const P=painter(g);for(let x=9;x<30;x++){const u=(x-19.5)/10;P.r(x,Math.round(9+5*(1-u*u)),1,3,RD)}lay(g,'bouncer',8,9)},
+    lc_chain:g=>{lay(g,'cuff',2,3);lay(g,'link',14,12);lay(g,'link',18,15);lay(g,'iron',15,15)},
+    lc_siren:g=>{lay(g,'bang',3,6);lay(g,'bang',31,6);lay(g,'siren',11,14);lay(g,'puff',3,27);lay(g,'puff',24,27)},
+    lc_cow:g=>{lay(g,'card',2,22);lay(g,'card',29,20);lay(g,'cow',7,14);lay(g,'moo',17,2)},
+    lc_vault:g=>{lay(g,'vault',0,0);lay(g,'spokes',9,9)},
+    lc_hand:g=>{lay(g,'card',0,6);lay(g,'card',30,10);lay(g,'hand',3,1)},
+    lc_boards:g=>{const P=painter(g);[[8,WD],[20,WD]].forEach(([y,c])=>{P.r(2,y,36,7,K);P.r(3,y+1,34,5,c);P.r(3,y+1,34,1,WDL);P.r(3,y+5,34,1,WDD);P.r(5,y+2,2,2,ST);P.r(33,y+2,2,2,ST)});
+      lay(g,'goblin',10,14);lay(g,'hammer',25,3)},
+    lc_castle:g=>{const P=painter(g);P.r(4,18,32,20,K);P.r(5,19,30,18,RK);P.r(5,19,30,1,RKL);P.r(5,19,1,18,RKL);P.r(34,19,1,18,RKD);
+      for(let x=5;x<35;x+=6)P.r(x,16,4,3,RK);for(let y=24;y<37;y+=5)for(let x=6;x<34;x+=8)P.r(x+(y%2?4:0),y,1,4,RKD);
+      P.r(16,27,8,10,'#2a2235');for(let x=17;x<24;x+=2)P.r(x,27,1,10,ST);lay(g,'crown',10,2)},
+    lc_dragon:g=>{lay(g,'flame',14,24);lay(g,'dragon',-12,3);lay(g,'drumstick',24,24)},
+  };
+  C.calls.forEach(c=>{const f=ICON[c.id];if(!f)return;let url=null;
+    c.thumb=function(){if(url)return url;try{const g=grid(ICON_N,ICON_N);badge(g,c.rarity);f(g);url=toURL(g)}catch(e){console.error('q44 icon',e);url=''}return url}});
+
+  window.Q44={CF,ICON,juice};
+})();
 /* test hook: ?board=N starts a bot match on round N (board N), &opp=1..7 players, &speed */
 const QS=new URLSearchParams(location.search);
 if(QS.get('preview')==='extras'){ /* test hook: every avatar with every hat, for drawing them */
