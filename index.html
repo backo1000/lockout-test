@@ -14136,6 +14136,7 @@ function openOpts(){
     ${row('MUSIC',tog('oMusic',SET.music))}
     ${row('MUSIC VOLUME',`<span class="ovol"><button class="btn y" id="oVolDn" aria-label="Quieter">-</button><span class="ovb">${'<i></i>'.repeat(SET.vol)}${'<i class="off"></i>'.repeat(5-SET.vol)}</span><button class="btn y" id="oVolUp" aria-label="Louder">+</button></span>`)}
     ${row('SOUND EFFECTS',tog('oSfx',SET.sfx))}
+    ${row('BAD LANGUAGE IN CHAT',tog('oSwear',SET.swear!==false))}
     <p class="onote">The menu plays Meadows from Fling Kingdom; games play the jazzy house tune from Sprout Hollow.</p>
     ${G.inGame?'':'<button class="btn p bbtn" id="oIntro">WATCH THE INTRO</button>'}
     <button class="btn r bbtn" id="oReset">${ask?'TAP AGAIN: WIPE YOUR XP AND BACKS':'RESET PROGRESS'}</button>
@@ -14143,6 +14144,7 @@ function openOpts(){
     if(!G.inGame)box.querySelector('#oIntro').onclick=()=>{ov.hidden=true;playIntro(showMenu)};
     box.querySelector('#oMusic').onclick=()=>{SET.music=!SET.music;setSave();musicMute();draw()};
     box.querySelector('#oSfx').onclick=()=>{SET.sfx=!SET.sfx;setSave();SFX.extra('click');draw()};
+    box.querySelector('#oSwear').onclick=()=>{SET.swear=SET.swear===false;setSave();SFX.extra('click');try{chatDraw();if(G.inGame)render()}catch(e){}draw()};
     box.querySelector('#oVolDn').onclick=()=>{SET.vol=Math.max(1,SET.vol-1);setSave();musicVolNow();draw()};
     box.querySelector('#oVolUp').onclick=()=>{SET.vol=Math.min(5,SET.vol+1);setSave();musicVolNow();draw()};
     box.querySelector('#oReset').onclick=()=>{if(!ask){ask=true;draw();return}PROF.xp=0;PROF.back=0;setBack(0);profSave();ask=false;renderTitle();draw()};
@@ -14594,6 +14596,7 @@ function chatClean(t){return String(t||'').replace(/[\u0000-\u001f]/g,' ').repla
 function chatOn(){return typeof NET!=='undefined'&&(NET.role==='host'||NET.role==='client')}
 function chatAdd(name,text,me){
   name=String(name||'PLAYER').toUpperCase().replace(/[^A-Z0-9 .!?-]/g,'').slice(0,14)||'PLAYER';text=chatClean(text);if(!text)return;
+  if(!me&&typeof chatMuted==='function'&&chatMuted(name))return;
   CHAT.log.push({name,text,me:!!me,t:Date.now()});if(CHAT.log.length>CHAT_KEEP)CHAT.log.shift();
   CHAT.bub[name]={text,until:Date.now()+CHAT_BUB_MS};setTimeout(()=>{if(G.inGame)render()},CHAT_BUB_MS+60);
   if(!me){if(!CHAT.open)CHAT.unread++;if(!sfxFile('chat',.6)){beep(1180,.05,'square',.04);beep(1580,.07,'square',.035,0,.06)}}
@@ -14608,7 +14611,7 @@ function chatSend(text){
 /* the text over a seat: matches the seat's name, or the host's real name, or you */
 function chatBub(pl,pi){
   const now=Date.now();for(const n in CHAT.bub){const b=CHAT.bub[n];if(b.until<now){delete CHAT.bub[n];continue}
-    if(pl.name===n||pl.nname===n||(pi===0&&n===NET.name))return esc(b.text)}
+    if(pl.name===n||pl.nname===n||(pi===0&&n===NET.name))return (typeof chatMuted==='function'&&chatMuted(n))?'':esc(typeof chatShow==='function'?chatShow(b.text):b.text)}
   return '';
 }
 function chatEl(){
@@ -14632,7 +14635,9 @@ function chatToggle(v){
 }
 function chatDraw(){
   const lg=document.getElementById('chatLog');if(!lg)return;
-  lg.innerHTML=CHAT.log.length?CHAT.log.map(m=>`<div class="cl${m.me?' me':''}"><b>${esc(m.name)}:</b> ${esc(m.text)}</div>`).join(''):'<div class="cl sys">NOBODY HAS SAID ANYTHING. BE THE FIRST.</div>';
+  const sh=t=>typeof chatShow==='function'?chatShow(t):t,mu=n=>typeof chatMuted==='function'&&chatMuted(n);
+  const L=CHAT.log.filter(m=>m.me||!mu(m.name));
+  lg.innerHTML=L.length?L.map(m=>`<div class="cl${m.me?' me':''}">${m.me?`<b>${esc(m.name)}:</b>`:`<b class="cn" data-cn="${esc(m.name)}" role="button" tabindex="0" title="Mute or report">${esc(sh(m.name))}:</b>`} ${esc(sh(m.text))}</div>`).join(''):'<div class="cl sys">NOBODY HAS SAID ANYTHING. BE THE FIRST.</div>';
   lg.scrollTop=lg.scrollHeight;
 }
 function chatUi(){
@@ -23896,7 +23901,9 @@ renderTitle();fit();
   function aSave(){try{localStorage.removeItem(AKEY);sessionStorage.removeItem(AKEY);if(A)store(A.remember).setItem(AKEY,JSON.stringify(A))}catch(e){}}
   aLoad();
   let guest=false;
-  window.ACC={get email(){return A&&A.email},signedIn:()=>!!A,guest:()=>guest,adminSkip:()=>{guest=true;enter()}};
+  window.ACC={get email(){return A&&A.email},signedIn:()=>!!A,guest:()=>guest,adminSkip:()=>{guest=true;enter()},
+    /* q45 (17 Nov): a chat report into lockout_reports; the server fills in who sent it */
+    report:async row=>{if(!A||!await fresh())return {ok:false};const r=await call('/rest/v1/lockout_reports',{method:'POST',at:A.at,body:row,prefer:'return=minimal'});return {ok:r.ok,st:r.st}}};
 
   async function call(path,o){o=o||{};const h={apikey:KEY_,'Content-Type':'application/json',Authorization:'Bearer '+(o.at||KEY_)};
     if(o.prefer)h.Prefer=o.prefer;
@@ -24783,6 +24790,80 @@ renderTitle();fit();
 
   window.Q44={CF,ICON,juice};
 })();
+/* =========================================================================
+   CHAT SAFETY (17 Nov 2026, Billy, laptop). Billy: anyone can say what they want; a player who'd rather not see
+   it switches BAD LANGUAGE off in Options (on by default). Tap a name in the chat to MUTE them (they vanish from
+   your chat and bubbles, kept on this device) or REPORT them (their last lines go to Supabase's lockout_reports,
+   SQL in ACCOUNTS SETUP.md, and they are muted too). The filter only changes what YOU see: nothing sent is touched.
+   ========================================================================= */
+const SWEAR_STEMS=['fuck','shit','cunt','wank','twat','bollock','bastard','bitch','whore','slut','nigg','faggot','retard','bellend','tranny','motherf','dickhead','arsehole','asshole','jizz','spunk'];
+const SWEAR_WORDS=['ass','arse','dick','dicks','cock','cocks','tit','tits','titty','piss','pissed','prick','pricks','knob','knobs','slag','slags','fag','fags','paki','pakis','chink','chinks','dyke','dykes','kike','kikes','spaz','spastic','crap','damn','bugger','shag','minge','tosser','nonce'];
+const SWEAR_LEET={'0':'o','1':'i','!':'i','3':'e','4':'a','@':'a','$':'s','5':'s','7':'t','8':'b','+':'t'};
+const SWEAR_RE=new RegExp('('+SWEAR_STEMS.join('|')+')[a-z]*|\\b('+SWEAR_WORDS.join('|')+')\\b','g');
+const SWEAR_MASK='#@!%&*';
+function swearOn(){return !(typeof SET!=='undefined'&&SET.swear===false)}
+/* the text with bad words masked, letter for letter (so a l33t spelling is caught but nothing moves) */
+function swearHide(t){
+  t=String(t||'');
+  const n=[...t.toLowerCase()].map(c=>SWEAR_LEET[c]||c).join('');
+  let out=[...t];SWEAR_RE.lastIndex=0;let m;
+  while((m=SWEAR_RE.exec(n))){for(let i=m.index;i<m.index+m[0].length;i++)if(/[a-z]/i.test(out[i]||''))out[i]=SWEAR_MASK[i%SWEAR_MASK.length];if(!m[0].length)SWEAR_RE.lastIndex++}
+  /* stretched (fuuuck) or spelled out one letter at a time (f u c k, f.u.c.k): words, single letters run together */
+  const runs=[];const WR=/[a-z]+/g;let w,cur=null;
+  while((w=WR.exec(n))){const one=w[0].length===1,near=cur&&cur.one&&one&&w.index-cur.end<=2;
+    if(near){cur.at.push(w.index);cur.end=w.index+1}else{cur={one,at:[...w[0]].map((_,k)=>w.index+k),end:w.index+w[0].length};runs.push(cur)}}
+  const RE2=new RegExp(SWEAR_STEMS.map(x=>x.replace(/(.)+/g,'$1')).join('|'));
+  for(const r of runs){if(r.one&&r.at.length<3)continue;const sq=[],ix=[];
+    for(const i of r.at){if(sq.length&&sq[sq.length-1]===n[i])continue;sq.push(n[i]);ix.push(i)}
+    if(RE2.test(sq.join('')))for(const i of r.at)out[i]=SWEAR_MASK[i%SWEAR_MASK.length]}
+  return out.join('');
+}
+function chatShow(t){return swearOn()?String(t||''):swearHide(t)}
+
+/* mutes: by the name they chat under, kept on this device */
+const MUTE_KEY='lockoutMute1';
+const CHAT_MUTE=(()=>{try{return new Set(JSON.parse(localStorage.getItem(MUTE_KEY)||'[]'))}catch(e){return new Set()}})();
+function chatMuted(name){return CHAT_MUTE.has(String(name||'').toUpperCase())}
+function chatMute(name,on){name=String(name||'').toUpperCase();if(on)CHAT_MUTE.add(name);else CHAT_MUTE.delete(name);
+  try{localStorage.setItem(MUTE_KEY,JSON.stringify([...CHAT_MUTE].slice(-200)))}catch(e){}
+  try{for(const k in CHAT.bub)if(chatMuted(k))delete CHAT.bub[k]}catch(e){}
+  chatDraw();if(G.inGame)render()}
+
+/* tapping a name: a little bar over the chat box */
+let chatPick=null,chatPickMsg='';
+function chatPickDraw(){
+  const el=document.getElementById('chat');if(!el)return;let bar=el.querySelector('.cpick');
+  if(!chatPick){if(bar)bar.remove();return}
+  if(!bar){bar=document.createElement('div');bar.className='cpick';el.querySelector('#chatLog').before(bar)}
+  const muted=chatMuted(chatPick);
+  bar.innerHTML=chatPickMsg?`<span class="cpm">${esc(chatPickMsg)}</span><button class="btn gy" data-cp="x">OK</button>`:
+    `<span class="cpn">${esc(chatShow(chatPick))}</span><button class="btn ${muted?'g':'y'}" data-cp="mute">${muted?'UNMUTE':'MUTE'}</button><button class="btn r" data-cp="report">REPORT</button><button class="btn gy" data-cp="x" aria-label="Close">X</button>`;
+}
+async function chatReport(name){
+  chatMute(name,true);
+  const lines=CHAT.log.filter(m=>!m.me&&m.name===name).slice(-10).map(m=>String(m.text).slice(0,120));
+  chatPickMsg='SENDING...';chatPickDraw();
+  let r={ok:false};try{if(window.ACC&&ACC.report)r=await ACC.report({name:String(name).slice(0,20),lines,room:(typeof NET!=='undefined'&&NET.code)?String(NET.code).slice(0,12):null})}catch(e){}
+  chatPickMsg=r.ok?"REPORTED AND MUTED. THANKS, WE'LL LOOK.":'MUTED. THE REPORT DIDN\'T SEND: EMAIL US.';chatPickDraw();
+}
+document.addEventListener('click',e=>{
+  const n=e.target.closest&&e.target.closest('#chatLog [data-cn]');
+  if(n){e.stopPropagation();chatPick=n.dataset.cn;chatPickMsg='';chatPickDraw();return}
+  const b=e.target.closest&&e.target.closest('#chat .cpick [data-cp]');if(!b)return;e.stopPropagation();
+  const k=b.dataset.cp;try{SFX.extra('click')}catch(x){}
+  if(k==='x'){chatPick=null;chatPickMsg='';chatPickDraw()}
+  else if(k==='mute'){chatMute(chatPick,!chatMuted(chatPick));chatPickDraw()}
+  else if(k==='report')chatReport(chatPick);
+},true);
+document.addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target.matches&&e.target.matches('#chatLog [data-cn]'))e.target.click()});
+(function(){const st=document.createElement('style');st.id='q45css';st.textContent=`
+#chatLog .cl b.cn{cursor:pointer;text-decoration:underline dotted;text-underline-offset:2px}
+#chatLog .cl b.cn:hover,#chatLog .cl b.cn:focus{color:#fff;outline:none}
+#chat .cpick{display:flex;align-items:center;gap:4px;margin:0 0 6px;padding:4px;background:var(--panel2);box-shadow:inset 0 0 0 2px var(--ink)}
+#chat .cpick .cpn,#chat .cpick .cpm{flex:1;font-size:10px;color:var(--goldl);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#chat .cpick .cpm{white-space:normal;color:var(--cardl)}
+#chat .cpick .btn{font-size:10px;padding:4px 6px;min-width:0}`;document.head.appendChild(st)})();
+
 /* test hook: ?board=N starts a bot match on round N (board N), &opp=1..7 players, &speed */
 const QS=new URLSearchParams(location.search);
 if(QS.get('preview')==='extras'){ /* test hook: every avatar with every hat, for drawing them */
