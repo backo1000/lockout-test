@@ -23989,6 +23989,8 @@ renderTitle();fit();
 .q35 .q35l .q35r{margin:0}
 .q35 .q35l .q35o{padding:3px 2px;margin:0}
 .q35 a.q35o{text-decoration:underline}
+.q35 .q35agree{display:block;margin:10px 0 8px;line-height:1.5;font-size:10px}
+.q35 .q35agree a{color:inherit;text-decoration:underline}
 .q35 #q35d{display:block;width:100%;box-sizing:border-box;margin:6px 0;height:30px;padding:4px 9px;border:0;border-radius:0;font:16px var(--pix);color:#fffaf0;background:#1a1030;box-shadow:inset 0 0 0 2px #a82a2a;outline:none;-webkit-appearance:none;appearance:none;-webkit-user-select:text;user-select:text}
 .q35g{position:absolute;left:0;right:0;top:590px;z-index:6;text-align:center}
 .q35g button{background:none;border:0;font:10px var(--pix);color:#c9b8f0;text-decoration:underline;cursor:pointer;padding:6px}
@@ -23997,6 +23999,9 @@ renderTitle();fit();
   document.head.appendChild(css);
 
   function boardHTML(){
+    if(!A&&agreeAsk)return `<h3 id="q35m">ONE MORE STEP</h3>
+      <label class="q35r q35agree"><input type="checkbox" id="q35a">I'M 13 OR OVER AND I AGREE TO THE <a href="privacy.html" target="_blank" rel="noopener">TERMS AND PRIVACY POLICY</a></label>
+      <div class="q35b"><button class="btn y" data-q35="agree">MAKE MY ACCOUNT</button><button class="btn" data-q35="cancel">BACK</button></div>`;
     if(recov)return `<h3 id="q35m">CHOOSE A NEW PASSWORD</h3>
       <input type="password" id="q35p" placeholder="NEW PASSWORD" autocomplete="new-password">
       <div class="q35b"><button class="btn g" data-q35="newpw">SAVE IT</button></div>
@@ -24015,14 +24020,16 @@ renderTitle();fit();
   let busy=false;
   function say(t,bad){const m=$('q35m');if(m){m.textContent=t;m.classList.toggle('bad',!!bad)}}
   function shake(){const b=document.querySelector('.q35');if(!b)return;b.classList.remove('shake');void b.offsetWidth;b.classList.add('shake')}
-  async function go(kind){if(busy)return;
-    const e=($('q35e').value||'').trim(),p=$('q35p').value||'',rem=!!($('q35k')&&$('q35k').checked);
+  async function go(kind,C){if(busy)return;
+    const e=C?C.e:($('q35e').value||'').trim(),p=C?C.p:($('q35p').value||''),rem=C?C.rem:!!($('q35k')&&$('q35k').checked);
     try{localStorage.setItem('lockoutAccRem',rem?'1':'0')}catch(x){}
     if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(e)){say("THAT DOESN'T LOOK LIKE AN EMAIL.",1);shake();return}
     if(p.length<6){say('PASSWORD: AT LEAST 6 CHARACTERS.',1);shake();return}
+    /* 17 Nov (Billy, laptop): signing up asks once for 13+ and the terms (Apple wants it before chat) */
+    if(kind==='up'&&!C){agreeAsk={e,p,rem};draw();return}
     busy=true;say(kind==='up'?'MAKING YOUR ACCOUNT...':'LOGGING IN...');
     try{
-      const r=kind==='up'?await call('/auth/v1/signup',{method:'POST',body:{email:e,password:p}})
+      const r=kind==='up'?await call('/auth/v1/signup',{method:'POST',body:{email:e,password:p,data:{agreed:new Date().toISOString(),age13:true,terms:'2026-11-17'}}})
                         :await call('/auth/v1/token?grant_type=password',{method:'POST',body:{email:e,password:p}});
       if(!r.ok){say(why(r),1);shake();return}
       if(!took(r.j,e,rem)){ /* signed up, but Supabase wants the email confirmed first */
@@ -24035,7 +24042,7 @@ renderTitle();fit();
     }finally{busy=false}}
   function enter(){gateGo0()}
   /* ---------- 17 Nov (Billy, laptop): forgot password, the link back, and deleting your account ---------- */
-  let recov=null,delAsk=false;
+  let recov=null,delAsk=false,agreeAsk=null;
   async function forgot(){if(busy)return;const e=($('q35e').value||'').trim();
     if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(e)){say('TYPE YOUR EMAIL ABOVE FIRST.',1);shake();return}
     busy=true;say('SENDING...');
@@ -24079,7 +24086,8 @@ renderTitle();fit();
       b.addEventListener('click',e=>{e.stopPropagation();const t=e.target.closest('[data-q35]');if(!t)return;const k=t.dataset.q35;
         if(k==='in'||k==='up')go(k);else if(k==='out')logout();
         else if(k==='forgot')forgot();else if(k==='newpw')newPw();else if(k==='del'){delAsk=true;draw()}else if(k==='delgo')delMe();
-        else if(k==='cancel'){delAsk=false;if(recov){recov=null;try{history.replaceState(null,'',location.pathname+location.search)}catch(x){}}draw()}});}
+        else if(k==='agree'){if(!($('q35a')&&$('q35a').checked)){say('TICK THE BOX TO CARRY ON.',1);shake();return}const C=agreeAsk;agreeAsk=null;draw();go('up',C)}
+        else if(k==='cancel'){delAsk=false;agreeAsk=null;if(recov){recov=null;try{history.replaceState(null,'',location.pathname+location.search)}catch(x){}}draw()}});}
     const old=b.querySelector('#q35e'),ev=old&&old.value;b.innerHTML=boardHTML();if(ev&&$('q35e'))$('q35e').value=ev;
     /* no guest play (Billy, 17 Nov): you need an account to play */
   }
