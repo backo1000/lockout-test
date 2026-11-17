@@ -19558,7 +19558,7 @@ function openNews(force){
     let std='';try{std=cd({r:'7',s:'d',id:-1},52,-21,-39,8)+cd({r:'A',s:'s',id:-2},52,-7,-13,0)+cd({r:'K',s:'h',id:-3},52,7,13,0)+cd({r:'JK',s:null,id:-4},52,21,39,8)}catch(e){}
     let pips='';try{pips='<span class="q17pips">'+['s','h','c','d'].map(k=>`<img src="${SUIT[k]}" alt="">`).join('')+'</span>'}catch(e){}
     bs.insertAdjacentHTML('afterbegin',`<i class="q17chf"></i><span class="q17cha std">${std}<i class="q17shine"></i></span>`);bs.insertAdjacentHTML('beforeend',pips);
-    let wl='';try{wl=`<div class="card q17bk" style="width:56px;height:78px;--r:-22deg;--x:-44px;--y:8px;background-image:url(${BACK})"></div>`+cd({r:'*bomb'},56,20,44,8)+cd({r:'*omega'},60,0,0,-8,'q17pk')}catch(e){}
+    let wl='';try{wl=`<div class="card q17bk" style="width:56px;height:78px;--r:-22deg;--x:-44px;--y:8px;background-image:url(${BACK})"></div>`+cd({r:'*bomb'},56,20,44,8)+cd({r:'*treasure'},60,0,0,-8,'q17pk')/* 17 Nov laptop: was *omega, removed from the game (drew blank) */}catch(e){}
     bw.insertAdjacentHTML('afterbegin',`<i class="q17chf"></i><span class="q17cha">${wl}</span><img class="q17reach" src="${BC}" alt=""><i class="q17cnr a"></i><i class="q17cnr b"></i>`)}
   function chooserShow(mode){chooserDress();const ov=$('q16ch');if(!ov||ov.hidden)return;const rk=mode==='ranked';ov.classList.toggle('q17rk',rk);
     const l=$('q17rkl');if(l){let h='';if(rk){try{const me=rkOf(((PROF[G.wildMatch?'rkw':'rk']||{}).rp)||0);h=`<img src="${RK_BADGE(me.t,me.d)}" alt=""><span>${me.name}</span>`}catch(e){}}l.innerHTML=h;l.hidden=!h}
@@ -23629,6 +23629,175 @@ renderTitle();fit();
   function hook(){box=document.getElementById('rkpBox');if(!box)return;if(!watching){watching=true;new MutationObserver(dress).observe(box,{childList:true,subtree:true})}dress()}
   const or=window.openRanked;if(typeof or==='function')window.openRanked=function(){const r=or.apply(this,arguments);try{hook()}catch(e){}return r};
   hook();
+})();
+
+/* =========================================================================
+   Q41: THE GOBLIN'S LESSON (17 Nov 2026, Billy, laptop): a Wild tutorial like Grandma's (q7), and HOW TO PLAY opens a
+   little menu to pick STANDARD (Grandma's lesson), WILD (this one) or the FULL RULES.
+   - The same kind of walkthrough as q7: a pretend table with its own fixed cards and its own state, never the real
+     engine, so it cannot break a match. The Sneaky Goblin teaches it (Wild is his kind of game).
+   - It reuses q7's whole look: the container is a second #q7tut (with class q41) while it is open, so every q7 rule
+     dresses it; it is removed again on closing.
+   - Offered once the first time you pick WILD in Quick Play (localStorage lockoutWildTutSeen1), like Grandma's on the
+     first PLAY BOTS. window.q41Tut = {open(opts), close(), steps}; opts {step, then, offer}.
+   ========================================================================= */
+(function(){
+  const KEY='lockoutWildTutSeen1',T_NAME='THE GOBLIN',T_CHAR=PORT.goblin?'goblin':'gran';
+  const C=(r,s)=>({r,s}),W=k=>({r:'*'+k});
+  const YOU_R=s=>({x:150+(s%2)*80,y:590+(s>>1)*108,w:72,h:100});
+  const OPP_R=s=>({x:184+(s%2)*50,y:58+(s>>1)*68,w:44,h:62});
+  const HAND_R={x:178,y:432,w:64,h:90},PK_R={x:322,y:618,w:56,h:78},MID_R={x:170,y:430,w:80,h:112};
+  const fresh=()=>({you:[{c:C('8','c')},{c:C('A','d')},{c:C('6','s')},{c:C('2','h')}],
+    opp:[{c:C('9','s')},{c:C('4','d')},{c:C('J','c')},{c:C('6','h')}],disc:C('10','h'),drawn:null,pocket:null,mid:null,mood:'n',
+    oppPk:true,panel:null,left:14,glowLeft:false,glowPk:false,banner:null});
+  const STEPS=[
+    {les:1,m:S=>{S.glowLeft=true;S.mood='h'},say:"PSST. WILD IS LOCKOUT WITH THE GLOVES OFF. SAME RULES, <b>LOWEST SCORE WINS</b>, BUT <b>FOURTEEN WILD CARDS</b> ARE HIDING IN THE DECK. SEE THE COUNT UNDER IT?",
+      hint:'WILD CARDS LEFT IN THE DECK',btn:['NEXT','g pulse']},
+    {les:2,m:S=>{S.glowLeft=false;S.mood='n'},say:"YOUR TURN. DRAW A CARD. GO ON, I WON'T LOOK. MUCH.",hint:'TAP THE DECK',taps:['deck'],
+      tap:async S=>{snd('draw');await fly(W('double'),DECK_R,HAND_R,true)}},
+    {les:2,m:S=>{S.drawn=W('double');S.left=13;S.mood='a';S.glowPk=true},say:"A <b>WILD CARD!</b> DOUBLE TURN. YOU CAN <b>USE IT NOW</b>, OR <b>KEEP IT</b> IN YOUR POCKET FOR LATER. LET'S KEEP IT. SNEAKY.",
+      hint:'TAP YOUR POCKET TO KEEP IT',taps:['pk'],tap:async S=>{snd('place');S.drawn=null;draw();await fly(W('double'),HAND_R,PK_R,true)}},
+    {les:3,m:S=>{S.drawn=null;S.pocket=W('double');S.glowPk=false;S.mood='h'},say:"POCKETED. EVERYONE SEES YOU'RE HOLDING ONE, NOBODY KNOWS WHICH. IT'S <b>NOT ONE OF YOUR CARDS</b> AND NEVER COUNTS TO YOUR SCORE. NOW YOU <b>DRAW AGAIN</b>.",
+      hint:'TAP THE DECK',taps:['deck'],tap:async S=>{snd('draw');await fly(C('5','c'),DECK_R,HAND_R,true)}},
+    {les:3,m:S=>{S.drawn=C('5','c');S.mood='n'},say:"A PLAIN OLD 5. FROM HERE IT'S NORMAL LOCKOUT: SWAP IT IN OR DISCARD IT. DISCARD IT, I'M A BUSY GOBLIN.",
+      hint:'TAP DISCARD',btn:['DISCARD','y pulse'],act:async S=>{snd('place');S.drawn=null;draw();await fly(C('5','c'),HAND_R,DISC_R,true)}},
+    {les:4,m:S=>{S.disc=C('5','c');S.glowPk=true;S.mood='t'},say:"YOUR TURN AGAIN. A POCKETED WILD CARD IS USED <b>AT THE START OF YOUR TURN</b>: TAP THE POCKET BEFORE YOU DRAW.",
+      hint:'TAP YOUR POCKET TO USE IT',taps:['pk'],tap:async S=>{snd('flip');S.pocket=null;S.glowPk=false;draw();await fly(W('double'),PK_R,MID_R,true)}},
+    {les:4,m:S=>{S.pocket=null;S.glowPk=false;S.mid=W('double');S.banner='DOUBLE TURN!';S.mood='a'},say:"<b>DOUBLE TURN!</b> YOU GO AGAIN STRAIGHT AFTER THIS ONE. BUT <b>ONE WILD CARD A TURN</b>, AND ONLY ONE DRAWN A TURN. NO CHAINING. I TRIED.",
+      hint:'',btn:['NEXT','g pulse']},
+    {les:5,m:S=>{S.mid=null;S.banner=null;S.pocket=W('shield');S.panel='full';S.mood='t'},say:"HOLDING ONE AND YOU DRAW ANOTHER? THEN YOU PICK: <b>USE</b> THE OLD ONE NOW, <b>KEEP</b> IT AND BIN THE NEW ONE, OR <b>SWAP</b>.",
+      hint:'',btn:['NEXT','g pulse']},
+    {les:6,m:S=>{S.panel=null;S.you[1].sh=true;S.mood='s'},say:"THAT <b>SHIELD</b> LOCKS ONE OF YOUR CARDS: NOBODY CAN SWAP IT, SNAP IT OR WILD IT. KEEP IT IN YOUR POCKET AND IT <b>BLOCKS</b> A WILD CARD AIMED AT YOU. VERY RUDE.",
+      hint:'A SHIELDED CARD',btn:['NEXT','g pulse']},
+    {les:7,m:S=>{S.you[1].sh=false;S.pocket=null;S.panel='all';S.mood='h'},say:"HERE'S THE WHOLE GANG. TAP <b>NEXT</b> WHEN YOU'VE STOPPED SCREAMING.",
+      hint:'',btn:['NEXT','g pulse']},
+    {les:8,m:S=>{S.panel=null;S.pocket=W('potato');S.mood='a'},say:"LAST THING. STILL HOLDING ONE WHEN THE ROUND ENDS? <b>IT'S GONE</b>. USE IT OR LOSE IT. NOW GO AND RUIN SOMEBODY'S DAY.",
+      hint:'USE IT OR LOSE IT',btn:['',''],last:true}
+  ];
+
+  let el=null,cur=0,S=null,busy=false,done=new Set(),then=null,offer=false,opened=false,arrowURL=null;
+  const snd=n=>{try{if(SFX[n])SFX[n]();else SFX.flip()}catch(e){}};
+  const click=()=>{try{SFX.extra('click')}catch(e){}};
+  const arrow=()=>arrowURL||(arrowURL=sprite(9,9,P=>{P.r(3,0,3,5,'#ffc21a');P.r(1,5,7,1,'#ffc21a');P.r(2,6,5,1,'#ffc21a');P.r(3,7,3,1,'#ffc21a');P.p(4,8,'#ffc21a');P.r(3,0,1,5,'#fff3a0');P.p(1,5,'#fff3a0');P.r(5,1,1,4,'#d98a00');P.p(7,5,'#d98a00');P.p(6,6,'#d98a00');P.p(5,7,'#d98a00')}));
+  function build(n){S=fresh();for(let i=0;i<=n;i++)STEPS[i].m(S);return S}
+  function fly(c,a,b,up){return new Promise(res=>{
+    const t=document.createElement('div');t.innerHTML=cardDiv(c,a,up,'q7fly');const d=t.firstChild;el.appendChild(d);d.getBoundingClientRect();
+    d.style.left=b.x+'px';d.style.top=b.y+'px';d.style.width=b.w+'px';d.style.height=b.h+'px';
+    setTimeout(()=>{d.remove();res()},290)})}
+  const st=document.createElement('style');st.textContent=`
+#q7tut.q41 .q41left{position:absolute;font-size:10px;font-weight:700;color:#b6f08a;text-shadow:var(--out);text-align:center;letter-spacing:.04em}
+#q7tut.q41 .q41left.glow{color:#fff3a0;animation:q7bob .5s steps(3) infinite alternate}
+#q7tut.q41 .q41pk{position:absolute;box-sizing:border-box;border:3px dashed #6fd13c;background:rgba(18,48,10,.55);display:flex;align-items:center;justify-content:center;
+  text-align:center;font-size:8px;line-height:1.4;color:#b6f08a;cursor:pointer}
+#q7tut.q41 .q41pk.glow{border-color:#fff3a0;box-shadow:0 0 0 3px rgba(255,243,160,.35)}
+#q7tut.q41 .q41pkl{position:absolute;font-size:8px;color:#b6f08a;text-align:center;text-shadow:var(--out)}
+#q7tut.q41 .q41opk{position:absolute;width:30px;height:42px;background:#2f8a25;box-shadow:0 0 0 2px var(--ink);display:flex;align-items:center;justify-content:center;font-size:14px;color:#fff3a0}
+#q7tut.q41 .q41ban{position:absolute;left:0;right:0;top:396px;text-align:center;font-size:26px;font-weight:700;color:#fff3a0;text-shadow:var(--out),0 4px 0 #12300a;animation:popin .3s ease-out;z-index:6}
+#q7tut.q41 .q41sh{position:absolute;inset:auto 0 -2px 0;text-align:center;font-size:18px;filter:none}
+#q7tut.q41 .q41all{display:grid;grid-template-columns:1fr 1fr;gap:4px 8px;margin-top:6px}
+#q7tut.q41 .q41all>div{display:flex;gap:6px;align-items:center;text-align:left;font-size:7px;line-height:1.35}
+#q7tut.q41 .q41all b{display:block;font-size:8px;color:var(--gold)}
+#q7tut.q41 .q41all .q7mini{flex:none}
+#q7tut.q41 .q41two{display:flex;justify-content:center;gap:18px;margin:6px 0}
+#q7tut.q41 .q41two small{display:block;font-size:8px;margin-bottom:4px;color:#b6f08a}
+#q7tut.q41 .q41acts{display:flex;gap:6px;justify-content:center;font-size:8px}
+#q7tut.q41 .q41acts span{padding:4px 6px;box-shadow:0 0 0 2px var(--ink)}
+#q41menu .q41mbox{position:relative;width:340px;display:flex;flex-direction:column;gap:12px;padding:18px 16px;background:var(--panel);box-shadow:var(--pxb),var(--pxs);text-align:center}
+#q41menu h2{margin:0;font-size:22px;color:var(--gold);text-shadow:var(--out),0 3px 0 var(--ink)}
+#q41menu .btn{position:relative!important;left:auto!important;top:auto!important;width:auto!important;height:auto!important;min-height:58px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:10px}
+#q41menu .btn b{font-size:17px;letter-spacing:.06em}#q41menu .btn small{font-size:8px;line-height:1.4}
+#q41menu #q41w{background:#2f8a25;color:#fff3a0;text-shadow:0 2px 0 #12300a}
+#q41menu #q41back{min-height:36px}`;
+  document.body.appendChild(st);
+
+  function draw(){
+    const T=STEPS[cur],want=(T.taps||[]).filter(t=>!done.has(t)),h=[];
+    const meChar=(typeof PROF!=='undefined'&&PROF.av&&PORT[PROF.av])?PROF.av:'you',tp=PORT[T_CHAR]||PORT.gran;
+    h.push(`<div class="q7h">WILD LESSON</div><div class="q7les plate">LESSON ${T.les}/8</div>
+      <div class="q7bar"><i style="width:${Math.round((cur+1)/STEPS.length*100)}%"></i></div>
+      <button class="btn y hbtn" data-q41="rules" style="left:270px;width:74px;font-size:9px;white-space:nowrap">FULL RULES</button>
+      <button class="btn gy hbtn" data-q41="skip" style="left:352px;width:56px">SKIP</button>`);
+    h.push(`<div class="port q7talk" style="left:112px;top:62px;width:56px;height:56px"><img src="${tp[S.mood]||tp.n}" alt="${T_NAME}"></div>
+      <div class="name plate" style="left:98px;top:126px;width:84px">GOBLIN</div>`);
+    if(S.oppPk)h.push(`<div class="q41opk" style="left:292px;top:66px" title="HE IS HOLDING A WILD CARD">?</div>`);
+    S.opp.forEach((x,s)=>h.push(cardDiv(x.c,OPP_R(s),false)));
+    h.push(`<div class="card back" style="left:${DECK_R.x+3}px;top:${DECK_R.y+3}px;width:${DECK_R.w}px;height:${DECK_R.h}px;background-image:url(${ICON.back})"></div>`+
+      cardDiv(null,DECK_R,false,want.includes('deck')?'q7t':'','data-q41t="deck" role="button" aria-label="Deck"')+
+      `<div class="pilelab" style="left:${DECK_R.x}px;top:${DECK_R.y+DECK_R.h+6}px;width:${DECK_R.w}px">DECK</div>
+      <div class="q41left${S.glowLeft?' glow':''}" style="left:${DECK_R.x-10}px;top:${DECK_R.y+DECK_R.h+19}px;width:${DECK_R.w+20}px">+${S.left} WILD</div>`);
+    h.push(S.disc?cardDiv(S.disc,DISC_R,true):'',`<div class="pilelab" style="left:${DISC_R.x}px;top:${DISC_R.y+DISC_R.h+6}px;width:${DISC_R.w}px">DISCARD</div>`);
+    if(S.drawn)h.push(cardDiv(S.drawn,HAND_R,true,'sel'));
+    if(S.mid)h.push(cardDiv(S.mid,MID_R,true,'sel'));
+    if(S.banner)h.push(`<div class="q41ban">${S.banner}</div>`);
+    h.push(`<div class="port" style="left:18px;top:592px;width:66px;height:66px"><img src="${PORT[meChar].n}" alt="You"></div>
+      <div class="name plate" style="left:9px;top:666px;width:90px;z-index:1">YOU</div>`);
+    S.you.forEach((x,s)=>{if(!x)return;let c=cardDiv(x.c,YOU_R(s),false,want.includes('y'+s)?'q7t':'');
+      if(x.sh)c=c.replace(/<\/div>$/,`<img class="lk" src="${ICON.lock}" alt=""></div>`);h.push(c)});
+    /* the pocket */
+    if(S.pocket)h.push(cardDiv(S.pocket,PK_R,true,(want.includes('pk')?'q7t ':'')+(S.glowPk?'sel':''),'data-q41t="pk" role="button" aria-label="Your Wild pocket"'));
+    else h.push(`<div class="q41pk${S.glowPk?' glow':''}${want.includes('pk')?' q7t':''}" data-q41t="pk" role="button" aria-label="Your Wild pocket" style="left:${PK_R.x}px;top:${PK_R.y}px;width:${PK_R.w}px;height:${PK_R.h}px">WILD<br>POCKET</div>`);
+    h.push(`<div class="q41pkl" style="left:${PK_R.x-8}px;top:${PK_R.y+PK_R.h+4}px;width:${PK_R.w+16}px">YOUR POCKET</div>`);
+    /* panels */
+    const mini=c=>`<div class="q7mini">${cardDiv(c,{x:0,y:0,w:30,h:42},true)}</div>`,big=c=>`<div class="q7mini">${cardDiv(c,{x:0,y:0,w:44,h:61},true)}</div>`;
+    if(S.panel==='full')h.push(`<div class="q7pan plate"><h3>POCKET FULL</h3><div class="q41two"><div><small>IN YOUR POCKET</small>${big(W('shield'))}</div><div><small>JUST DRAWN</small>${big(W('potato'))}</div></div>
+      <div class="q41acts"><span style="background:#c0506a">USE SHIELD NOW</span><span style="background:#ffc21a;color:var(--ink)">KEEP SHIELD</span><span style="background:#3aa82c">SWAP FOR POTATO</span></div></div>`);
+    if(S.panel==='all'){const L=window.WILD||{};h.push(`<div class="q7pan plate"><h3>THE WILD CARDS</h3><div class="q41all">`+
+      Object.keys(L).map(k=>`<div>${mini(W(k))}<span><b>${L[k].name}${L[k].n>1?' x'+L[k].n:''}</b>${String(L[k].say||'').toUpperCase()}</span></div>`).join('')+`</div></div>`)}
+    h.push(`<div id="q7bub"><span class="who">${T_NAME}</span>${T.say}</div>`);
+    if(T.hint)h.push(`<div id="q7hint" class="plate"><span>${T.hint}</span></div>`);
+    const B=(act,label,cls,y)=>`<button class="btn ${cls}" data-q41="${act}" style="left:12px;top:${y}px;width:126px;height:36px;font-size:${label.length>9?12:15}px">${label}</button>`;
+    if(T.last)h.push(B('next',then?'LET ME PLAY':'GOT IT','g pulse',708)+B('again','AGAIN','gy',754));
+    else if(cur===0&&offer)h.push(B('next','TEACH ME','g pulse',708)+B('skip','I KNOW WILD','gy',754));
+    else if(T.btn)h.push(B('next',T.btn[0],T.btn[1],708));
+    const rect=id=>id==='deck'?DECK_R:id==='pk'?PK_R:YOU_R(+id[1]);
+    want.forEach((id,i)=>{const r=rect(id);h.push(`<img class="q7arrow" src="${arrow()}" alt="" style="left:${r.x+r.w/2-12}px;top:${r.y-32}px;animation-delay:${-i*.2}s">`)});
+    el.innerHTML=h.join('');
+  }
+  function go(n){cur=Math.max(0,Math.min(STEPS.length-1,n));done=new Set();busy=false;build(cur);draw()}
+  async function next(){const T=STEPS[cur];if(busy)return;if(T.last){close(true);return}
+    busy=true;try{if(T.act)await T.act(S)}catch(e){console.error(e)}if(!opened)return;go(cur+1)}
+  async function tap(id,node){const T=STEPS[cur];if(busy||!T.taps)return;
+    if(!T.taps.includes(id)||done.has(id)){node.classList.remove('q7shake');node.getBoundingClientRect();node.classList.add('q7shake');return}
+    done.add(id);busy=true;const at=cur;try{await T.tap(S,id)}catch(e){console.error(e)}
+    if(!opened||cur!==at)return;busy=false;
+    if(T.taps.every(t=>done.has(t))){draw();busy=true;setTimeout(()=>{if(opened&&cur===at)go(at+1)},120)}else draw()}
+  function open(o){o=o||{};then=o.then||null;offer=!!o.offer;
+    if(!el){el=document.createElement('div');el.className='q41';
+      el.addEventListener('click',e=>{try{audioInit()}catch(x){}
+        const b=e.target.closest('[data-q41]');
+        if(b){const a=b.dataset.q41;click();if(a==='skip')close(true);else if(a==='rules')openRules();else if(a==='again'){offer=false;go(0)}else next();return}
+        const c=e.target.closest('[data-q41t]');if(c)tap(c.dataset.q41t,c)})}
+    el.id='q7tut';document.getElementById('stage').appendChild(el);
+    try{el.style.backgroundImage=`url(${document.getElementById('scene').toDataURL()})`}catch(e){}
+    try{localStorage.setItem(KEY,'1')}catch(e){}
+    opened=true;el.hidden=false;go(o.step||0)}
+  function close(run){if(!el)return;opened=false;busy=false;el.innerHTML='';el.remove();const t=then;then=null;if(run&&t)t()}
+  document.addEventListener('keydown',e=>{if(!opened||e.key!=='Escape')return;if(!document.getElementById('rules').hidden)return;e.stopImmediatePropagation();close(true)},true);
+
+  /* ---------- HOW TO PLAY: a menu, STANDARD / WILD / FULL RULES ---------- */
+  const ov=document.createElement('div');ov.id='q41menu';ov.className='ov';ov.hidden=true;
+  ov.innerHTML=`<div class="q41mbox"><h2>HOW TO PLAY</h2>
+    <button class="btn y" id="q41s"><b>STANDARD</b><small>GRANDMA'S LESSON: THE BASICS OF LOCKOUT.</small></button>
+    <button class="btn g" id="q41w"><b>WILD</b><small>THE GOBLIN'S LESSON: WILD CARDS, YOUR POCKET AND THE SHIELD.</small></button>
+    <button class="btn p" id="q41r"><b>FULL RULES</b><small>EVERYTHING, WRITTEN DOWN.</small></button>
+    <button class="btn gy" id="q41back">BACK</button></div>`;
+  document.getElementById('stage').appendChild(ov);
+  const shut=()=>{ov.hidden=true};
+  ov.querySelector('#q41s').onclick=()=>{click();shut();if(window.q7Tut)q7Tut.open({});else openRules()};
+  ov.querySelector('#q41w').onclick=()=>{click();shut();open({})};
+  ov.querySelector('#q41r').onclick=()=>{click();shut();openRules()};
+  ov.querySelector('#q41back').onclick=()=>{click();shut()};
+  const how=document.getElementById('btnHow');
+  if(how)how.onclick=function(){try{audioInit();click()}catch(x){}ov.hidden=false};
+
+  /* ---------- the first WILD in Quick Play offers the lesson once ---------- */
+  const bw=document.getElementById('btnWild');
+  if(bw&&bw.onclick){const o0=bw.onclick;
+    bw.onclick=function(e){let seen=true;try{seen=!!localStorage.getItem(KEY)}catch(x){}
+      if(seen)return o0.call(this,e);
+      try{audioInit();click()}catch(x){}
+      open({offer:true,then:()=>o0.call(bw,e)})}}
+  window.q41Tut={open,close,steps:STEPS};
 })();
 
 /* test hook: ?board=N starts a bot match on round N (board N), &opp=1..7 players, &speed */
