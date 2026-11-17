@@ -22298,7 +22298,7 @@ body.q16pick #table .card.tgt::before{content:"";position:absolute;right:-8px;to
     [[150,120],[151,121],[151,122],[152,123],[153,123],[153,124],[154,125]].forEach(([a,b])=>R(a,b,1,1,'#3a2c50'));
     R(28,146,14,8,'#3a2c50');[[29,147],[35,147],[32,150],[38,150]].forEach(([a,b])=>R(a,b,5,2,'#7a4240'));
     /* timber: corner posts, braces, the lintel beam over the window */
-    const post=a=>{R(a,91,6,172,'#2c1a2a');R(a,91,1,172,'#4a2e36');R(a+5,91,1,172,K);for(let b=100;b<260;b+=17)R(a+2,b,2,5,'#231422')};
+    const post=a=>{R(a,91,6,217,'#2c1a2a');R(a,91,1,217,'#4a2e36');R(a+5,91,1,217,K);for(let b=100;b<304;b+=17)R(a+2,b,2,5,'#231422')};
     post(0);post(204);
     for(let k=0;k<26;k++){R(6+k,117-k,4,1,'#2c1a2a');R(6+k,117-k,1,1,'#4a2e36');R(200-k-3,117-k,4,1,'#2c1a2a');R(200-k,117-k,1,1,'#4a2e36')}
     R(0,175,W,10,K);R(0,176,W,8,'#2c1a2a');R(0,176,W,1,'#4a2e36');for(let i=10;i<W;i+=30){R(i,179,8,1,'#231422');R(i+15,181,5,1,'#3a2230')}
@@ -22307,12 +22307,14 @@ body.q16pick #table .card.tgt::before{content:"";position:absolute;right:-8px;to
     for(let i=0;i<34;i++){const b=92+i*2+Math.floor(rnd()*2),a=197+Math.floor(rnd()*9);R(a,b,2,2,pick(['#2c7a3a','#3d9a4a','#1d5a2c']));if(rnd()<.3)R(a-2,b+1,2,1,'#1d5a2c')}
     for(let i=0;i<10;i++){R(186+Math.floor(rnd()*12),92+Math.floor(rnd()*8),2,2,pick(['#2c7a3a','#3d9a4a']))}
     /* the window: frame, the warm room inside */
-    R(17,184,176,74,K);
-    const IX=22,IY=185,IW=166,IH=73,band=j=>j<7?'#4e2416':j<15?'#7e3c1c':j<27?'#b8601f':j<42?'#e08a28':'#ffb43c';
+    /* Q39 (17 Nov 2026, Fable): the window is 120 rows deep now (was 73), so the room runs down to y 305 and everything
+       under it (foundation, lanterns, barrel, crate, street) sits 45 lower */
+    R(17,184,176,122,K);
+    const IX=22,IY=185,IW=166,IH=120,band=j=>j<8?'#4e2416':j<18?'#7e3c1c':j<36?'#b8601f':j<60?'#e08a28':'#ffb43c';
     for(let j=0;j<IH;j++){R(IX,IY+j,IW,1,band(j));
-      if(j===6||j===14||j===26||j===41)for(let i=0;i<IW;i+=2)R(IX+i+(j%2),IY+j,1,1,band(j+1))}
+      if(j===7||j===17||j===35||j===59)for(let i=0;i<IW;i+=2)R(IX+i+(j%2),IY+j,1,1,band(j+1))}
     /* soft glow round the middle of the room */
-    x.globalAlpha=.16;disc(105,236,44,'#fff4b0');disc(105,236,30,'#fff4b0');x.globalAlpha=1;
+    x.globalAlpha=.16;disc(105,258,54,'#fff4b0');disc(105,258,36,'#fff4b0');x.globalAlpha=1;
     /* ceiling beams */
     R(IX,IY,IW,4,'#32170f');R(IX,IY+3,IW,1,'#5a2a18');[52,105,158].forEach(a=>{R(a-3,IY+4,6,3,'#32170f')});
     /* the chandelier: a cartwheel with four candles */
@@ -22324,54 +22326,98 @@ body.q16pick #table .card.tgt::before{content:"";position:absolute;right:-8px;to
     shelf(26,50);shelf(134,50);
     R(40,IY+38,22,2,'#6a3016');R(144,IY+38,22,2,'#6a3016');
     /* a dartboard between the shelves, one dart well wide of it */
-    disc(105,IY+30,7,'#32170f');disc(105,IY+30,6,'#96341e');disc(105,IY+30,4,'#f4ecc8');disc(105,IY+30,2,'#96341e');R(105,IY+30,1,1,'#ffe066');
-    R(117,IY+26,4,1,'#f4ecc8');R(121,IY+25,2,3,'#3d9a4a');
+    disc(105,IY+26,7,'#32170f');disc(105,IY+26,6,'#96341e');disc(105,IY+26,4,'#f4ecc8');disc(105,IY+26,2,'#96341e');R(105,IY+26,1,1,'#ffe066');
+    /* Q39: the back of the room, now there is room for it: a fireplace on the left, the bar across the back with its
+       pumps and tankards, the barkeep behind it (the dart that missed the board is in his hat), kegs under the counter,
+       a sleeping drunk's hat on a hook, and the cast's own table in front of it all (the heads over the sill cover most
+       of it, which is the point: they are stood on the benches to see out) */
+    { const CT=IY+54; /* the counter top */
+      /* fireplace, left of the left shelf: stone surround, a black mouth, a fire with a pot over it */
+      R(28,IY+40,20,16,'#5a4a62');R(28,IY+40,20,1,'#8a7a92');R(28,IY+40,1,16,'#8a7a92');R(47,IY+40,1,16,'#3a2c44');
+      for(let j=0;j<4;j++)for(let i=0;i<3;i++)R(29+i*7-(j%2)*3,IY+41+j*4,6,3,pick(['#6a5a72','#625270','#56466a']));
+      R(32,IY+44,12,12,'#1a0a08');R(34,IY+50,8,5,'#e8502a');R(35,IY+49,6,5,'#ff8a1a');R(36,IY+50,4,3,'#ffd34a');R(37,IY+48,2,2,'#ff8a1a');R(39,IY+47,1,1,'#ffd34a');
+      R(33,IY+44,10,1,'#2a2238');R(37,IY+44,2,4,'#2a2238');R(35,IY+47,6,3,'#2a2238');R(35,IY+47,6,1,'#4a4258');
+      /* the barkeep (drawn first: the counter stands in front of him): a big bald goblin in a waistcoat, polishing a glass,
+         the stray dart stuck in his cap */
+      const BY=IY+3;
+      R(97,BY+37,16,17,'#4e8a3c');R(99,BY+34,12,6,'#5a9a46');R(99,BY+34,12,1,'#7ab860');R(97,BY+37,1,17,'#6aa852');
+      R(100,BY+40,3,3,'#fffaf0');R(107,BY+40,3,3,'#fffaf0');R(101,BY+41,1,1,'#1a1030');R(108,BY+41,1,1,'#1a1030');R(103,BY+45,5,1,'#1a1030');R(102,BY+46,7,1,'#1a1030');
+      R(95,BY+42,2,5,'#4e8a3c');R(113,BY+42,2,5,'#4e8a3c');R(96,BY+41,1,1,'#6aa852');R(113,BY+41,1,1,'#6aa852');
+      R(96,BY+50,18,6,'#7e3c1c');R(96,BY+50,18,1,'#96341e');R(104,BY+50,2,6,'#f4ecc8');R(100,BY+52,2,2,'#ffe066');R(108,BY+52,2,2,'#ffe066');
+      R(92,BY+49,4,6,'#4e8a3c');R(114,BY+49,4,6,'#4e8a3c');R(116,BY+46,3,4,'#c8c2d8');R(116,BY+46,1,4,'#fffaf0');R(118,BY+44,2,2,'#f4ecc8');
+      R(98,BY+32,14,3,'#2c2238');R(98,BY+32,14,1,'#4a4258');R(103,BY+27,3,3,'#c0392b');R(104,BY+26,1,1,'#c0392b');R(104,BY+30,1,2,'#f4ecc8');R(104,BY+32,1,1,'#c9cede');
+      /* the bar: a long counter with a brass rail, pumps, tankards and a cloth */
+      R(24,CT,162,3,'#8a4420');R(24,CT,162,1,'#c8742a');R(24,CT+3,162,20,'#4e2416');R(24,CT+3,162,1,'#32170f');
+      for(let i=0;i<9;i++){const a=28+i*18;R(a,CT+6,13,14,'#5e2c18');R(a,CT+6,13,1,'#7e3c1c');R(a,CT+6,1,14,'#7e3c1c');R(a+12,CT+6,1,14,'#32170f')}
+      R(24,CT+18,162,1,'#c8a040');R(24,CT+19,162,1,'#7a5a18');
+      [40,58,140,158].forEach(a=>{R(a,CT-4,3,4,'#c8c2d8');R(a,CT-4,1,4,'#fffaf0');R(a-1,CT-6,5,2,'#3a2230')});
+      [[74,'#c8965a'],[82,'#c8965a'],[122,'#c8965a'],[130,'#c8965a'],[96,'#5a6a22'],[112,'#96341e']].forEach(([a,col])=>{R(a,CT-5,5,5,col);R(a,CT-5,1,5,'#e8be82');R(a+5,CT-4,1,3,col);R(a,CT-6,5,1,'#fffaf0')});
+      R(166,CT-1,14,3,'#f4ecc8');R(166,CT-1,14,1,'#fffaf0');R(168,CT+1,10,1,'#c0392b');
+      /* a hat on a hook and a coat, by the right shelf */
+      R(176,IY+40,2,2,'#c8c2d8');R(172,IY+42,10,3,'#6a3016');R(174,IY+39,6,3,'#6a3016');R(172,IY+42,10,1,'#8a4420');
+      /* the table in front of the bar: a round top with a candle, cards and a spilled mug */
+      R(60,IY+70,90,4,'#6a3016');R(62,IY+69,86,1,'#8a4420');R(60,IY+74,90,2,'#4e2416');
+      R(100,IY+62,2,7,'#fffaf0');R(100,IY+60,2,2,'#ffe066');x.globalAlpha=.3;disc(101,IY+61,5,'#fff4b0');x.globalAlpha=1;
+      [[70,'#fffaf0'],[76,'#fffaf0'],[124,'#c0392b'],[131,'#fffaf0']].forEach(([a,col])=>{R(a,IY+66,6,4,col);R(a+2,IY+67,2,2,col==='#fffaf0'?'#c0392b':'#fffaf0')});
+      R(140,IY+65,6,5,'#c8965a');R(140,IY+65,1,5,'#e8be82');R(134,IY+68,6,2,'#e8a040');
+      /* kegs under the counter, where the cast's benches are */
+      [30,150].forEach(a=>{R(a,IY+78,20,14,'#7a4c2a');R(a,IY+78,3,14,'#a87444');R(a+17,IY+78,3,14,'#5e3a1e');R(a,IY+80,20,2,'#2a2238');R(a,IY+88,20,2,'#2a2238')});
+    }
     /* frame timbers */
-    R(18,185,4,73,'#3a2230');R(18,185,1,73,'#6a4448');R(188,185,4,73,'#3a2230');R(188,185,1,73,'#6a4448');R(191,185,1,73,'#231422');
+    R(18,185,4,120,'#3a2230');R(18,185,1,120,'#6a4448');R(188,185,4,120,'#3a2230');R(188,185,1,120,'#6a4448');R(191,185,1,120,'#231422');
     /* light falling on the frame's inner edges */
-    R(21,200,1,56,'#c8742a');R(188,200,1,56,'#c8742a');
+    R(21,200,1,103,'#c8742a');R(188,200,1,103,'#c8742a');
     /* shutters, thrown open */
-    const shut=a=>{R(a-1,184,13,75,K);R(a,185,11,73,'#2c6a56');for(let b=188;b<256;b+=6){R(a+1,b,9,1,'#1d463c');R(a+1,b+1,9,1,'#3f8a6e')}
-      R(a,185,1,73,'#4a9a7c');R(a+10,185,1,73,'#1d463c');R(a,185,11,1,'#4a9a7c');R(a,257,11,1,'#1d463c');
-      [195,245].forEach(b=>{R(a+1,b,7,2,'#2a2238');R(a+1,b,7,1,'#6a6280')})};
+    const shut=a=>{R(a-1,184,13,122,K);R(a,185,11,120,'#2c6a56');for(let b=188;b<303;b+=6){R(a+1,b,9,1,'#1d463c');R(a+1,b+1,9,1,'#3f8a6e')}
+      R(a,185,1,120,'#4a9a7c');R(a+10,185,1,120,'#1d463c');R(a,185,11,1,'#4a9a7c');R(a,304,11,1,'#1d463c');
+      [195,244,292].forEach(b=>{R(a+1,b,7,2,'#2a2238');R(a+1,b,7,1,'#6a6280')})};
     shut(7);shut(192);
     /* the foundation: big cut stones */
-    R(0,263,W,88,'#241c38');
-    for(let r=0;r<11;r++){const y=263+r*8,ox=(r%2)*8;
+    R(0,308,W,64,'#241c38');
+    for(let r=0;r<8;r++){const y=308+r*8,ox=(r%2)*8;
       for(let i=-1;i<14;i++){const sx=i*16-ox,col=pick(['#3c3454','#3c3454','#443c5e','#352e4c']);
         R(sx+1,y+1,15,7,col);R(sx+1,y+1,15,1,'#56507a');R(sx+1,y+1,1,6,'#4c4468');R(sx+1,y+7,15,1,'#2c2644');
         if(rnd()<.3)R(sx+4+Math.floor(rnd()*8),y+3+Math.floor(rnd()*2),2,1,'#2c2644');if(rnd()<.12)R(sx+3,y+6,5,1,'#2c7a3a')}}
-    R(0,263,W,2,K);R(0,265,W,2,'#1a1430');
+    R(0,308,W,2,K);R(0,310,W,2,'#1a1430');
     /* the lantern brackets (the lanterns themselves swing, so they are sprites) */
-    const brk=(a,d)=>{R(a,270,d*9,2,K);R(a,268,2,8,K);R(a+d*8,270,2,4,K);R(a+d*2,272,2,2,K);R(a+d*3,274,1,1,K)};
+    const brk=(a,d)=>{R(a,315,d*9,2,K);R(a,313,2,8,K);R(a+d*8,315,2,4,K);R(a+d*2,317,2,2,K);R(a+d*3,319,1,1,K)};
     brk(5,1);brk(203,-1);
     /* lantern light on the stones */
-    x.globalAlpha=.07;[13,196].forEach(a=>{disc(a,286,34,'#ffb43c');disc(a,286,24,'#ffb43c');disc(a,286,15,'#ffc85a');disc(a,286,8,'#ffe066')});x.globalAlpha=1;
+    x.globalAlpha=.07;[13,196].forEach(a=>{disc(a,331,34,'#ffb43c');disc(a,331,24,'#ffb43c');disc(a,331,15,'#ffc85a');disc(a,331,8,'#ffe066')});x.globalAlpha=1;
     /* window light spilling down the wall under the sill */
-    x.globalAlpha=.06;for(let k=0;k<4;k++)R(26+k*6,263,158-k*12,10+k*7,'#ffb43c');x.globalAlpha=1;
-    /* the street: cobbles */
-    R(0,350,W,60,'#1c1630');R(0,350,W,1,K);
-    for(let y=352;y<H;y+=6){let i=-Math.floor(rnd()*6);while(i<W){const w=7+Math.floor(rnd()*6),col=pick(['#3a3252','#3a3252','#443c5e','#302a48','#4a4266']);
+    x.globalAlpha=.06;for(let k=0;k<4;k++)R(26+k*6,308,158-k*12,10+k*7,'#ffb43c');x.globalAlpha=1;
+    /* the street: cobbles, with a kerb */
+    R(0,370,W,40,'#1c1630');R(0,370,W,1,K);R(0,371,W,3,'#3a3252');R(0,371,W,1,'#5a5278');R(0,374,W,1,'#28223e');
+    for(let y=376;y<H;y+=6){let i=-Math.floor(rnd()*6);while(i<W){const w=7+Math.floor(rnd()*6),col=pick(['#3a3252','#3a3252','#443c5e','#302a48','#4a4266']);
         R(i,y,w,5,col);R(i,y,w,1,'#5a5278');R(i,y,1,1,'#1c1630');R(i+w-1,y,1,1,'#1c1630');R(i,y+4,w,1,'#28223e');R(i,y+4,1,1,'#1c1630');R(i+w-1,y+4,1,1,'#1c1630');i+=w+1}}
     /* light across the cobbles: the window in the middle, a pool under each lantern */
-    x.globalAlpha=.07;for(let k=0;k<5;k++)R(44-k*8,351,122+k*16,8+k*9,'#ffb43c');
-    [13,196].forEach(a=>{disc(a,356,22,'#ffb43c');disc(a,356,13,'#ffc85a')});x.globalAlpha=1;
+    x.globalAlpha=.07;for(let k=0;k<4;k++)R(44-k*8,371,122+k*16,8+k*8,'#ffb43c');
+    [13,196].forEach(a=>{disc(a,376,22,'#ffb43c');disc(a,376,13,'#ffc85a')});x.globalAlpha=1;
     /* a puddle with the moon in it */
-    R(118,392,26,3,'#241c40');R(122,391,18,5,'#241c40');R(124,392,10,1,'#4a4288');R(130,393,3,1,'#f4ecc8');R(127,394,8,1,'#3a3270');
+    R(168,388,26,3,'#241c40');R(172,387,18,5,'#241c40');R(174,388,10,1,'#4a4288');R(180,389,3,1,'#f4ecc8');R(177,390,8,1,'#3a3270');
     /* the barrel, with somebody's mug left on it */
-    R(5,319,26,35,K);R(4,323,28,27,K);
-    R(6,320,24,33,'#7a4c2a');R(5,324,26,25,'#7a4c2a');
-    for(let i=0;i<5;i++){R(8+i*5,321,1,31,'#4e2e18')}R(6,320,3,33,'#a87444');R(5,324,2,25,'#a87444');R(27,320,3,33,'#5e3a1e');R(29,324,2,25,'#4e2e18');
-    R(4,325,28,3,'#2a2238');R(4,325,28,1,'#7a7290');R(4,344,28,3,'#2a2238');R(4,344,28,1,'#7a7290');R(6,319,24,2,'#b9803f');R(6,320,24,1,'#8b5a2b');
-    R(11,309,12,11,K);R(22,312,5,6,K);R(12,312,10,7,'#c8965a');R(12,312,2,7,'#e8be82');R(20,312,2,7,'#96683a');R(23,313,3,4,'#c8965a');R(23,314,2,2,K);
-    R(12,310,10,3,'#fffaf0');R(13,309,3,1,'#fffaf0');R(18,309,3,1,'#fffaf0');R(12,313,2,2,'#fffaf0');
+    R(5,351,26,35,K);R(4,355,28,27,K);
+    R(6,352,24,33,'#7a4c2a');R(5,356,26,25,'#7a4c2a');
+    for(let i=0;i<5;i++){R(8+i*5,353,1,31,'#4e2e18')}R(6,352,3,33,'#a87444');R(5,356,2,25,'#a87444');R(27,352,3,33,'#5e3a1e');R(29,356,2,25,'#4e2e18');
+    R(4,357,28,3,'#2a2238');R(4,357,28,1,'#7a7290');R(4,376,28,3,'#2a2238');R(4,376,28,1,'#7a7290');R(6,351,24,2,'#b9803f');R(6,352,24,1,'#8b5a2b');
+    R(11,341,12,11,K);R(22,344,5,6,K);R(12,344,10,7,'#c8965a');R(12,344,2,7,'#e8be82');R(20,344,2,7,'#96683a');R(23,345,3,4,'#c8965a');R(23,346,2,2,K);
+    R(12,342,10,3,'#fffaf0');R(13,341,3,1,'#fffaf0');R(18,341,3,1,'#fffaf0');R(12,345,2,2,'#fffaf0');
     /* the crate and a bottle */
-    R(180,329,26,25,K);R(181,330,24,23,'#8b5a2b');R(181,330,24,3,'#b9803f');R(181,350,24,3,'#5e3a1a');R(181,330,3,23,'#b07c42');R(202,330,3,23,'#5e3a1a');
-    for(let k=0;k<16;k++){R(185+k,334+k,3,1,'#5e3a1a');R(185+k,333+k,2,1,'#b07c42')}
-    [[183,332],[203,332],[183,351],[203,351]].forEach(([a,b])=>R(a,b,1,1,'#2a2238'));
-    R(187,316,8,14,K);R(189,311,4,6,K);R(188,317,6,12,'#2c7a3a');R(188,317,2,12,'#4ab05a');R(190,312,2,5,'#2c7a3a');R(190,311,2,2,'#c8965a');R(189,322,4,4,'#f4ecc8');
+    R(180,355,26,25,K);R(181,356,24,23,'#8b5a2b');R(181,356,24,3,'#b9803f');R(181,376,24,3,'#5e3a1a');R(181,356,3,23,'#b07c42');R(202,356,3,23,'#5e3a1a');
+    for(let k=0;k<16;k++){R(185+k,360+k,3,1,'#5e3a1a');R(185+k,359+k,2,1,'#b07c42')}
+    [[183,358],[203,358],[183,377],[203,377]].forEach(([a,b])=>R(a,b,1,1,'#2a2238'));
+    R(187,342,8,14,K);R(189,337,4,6,K);R(188,343,6,12,'#2c7a3a');R(188,343,2,12,'#4ab05a');R(190,338,2,5,'#2c7a3a');R(190,337,2,2,'#c8965a');R(189,348,4,4,'#f4ecc8');
+    /* Q39: a drunk asleep against the crate, hat over his eyes, a bottle in his lap (his snores are CSS) */
+    R(141,384,22,8,K);R(159,373,18,16,K);R(162,363,14,11,K);R(158,366,21,4,K);
+    R(142,386,20,5,'#4a3a7a');R(142,386,20,1,'#6a5a9a');R(142,385,5,6,'#2c2238');R(142,385,5,1,'#4a4258');R(147,391,14,1,'#3a2a60');
+    R(160,374,16,14,'#5a3a8a');R(160,374,16,1,'#7a5aa8');R(160,374,1,14,'#7a5aa8');R(174,376,2,12,'#3a2460');R(167,378,2,2,'#c8a040');R(167,382,2,2,'#c8a040');
+    R(163,364,12,9,'#e8be82');R(163,364,1,9,'#f4ecc8');R(159,367,19,2,'#6a3016');R(161,362,15,5,'#6a3016');R(161,362,15,1,'#8a4420');R(159,367,19,1,'#8a4420');R(165,370,2,1,'#1a1030');R(170,370,2,1,'#1a1030');R(166,372,5,2,'#1a1030');R(167,373,3,1,'#c0392b');
+    R(158,377,4,8,'#5a3a8a');R(157,384,5,3,'#e8be82');R(151,378,4,9,K);R(152,375,2,4,K);R(152,379,3,8,'#2c7a3a');R(152,379,1,8,'#4ab05a');R(153,376,1,4,'#2c7a3a');R(153,375,1,1,'#c8965a');R(152,383,3,2,'#f4ecc8');
     /* three cards somebody dropped in the gutter */
-    [[62,372,'#fffaf0'],[70,376,'#fffaf0'],[150,366,'#c0392b']].forEach(([a,b,col])=>{R(a-1,b-1,9,6,K);R(a,b,7,4,col);R(a+2,b+1,2,2,col==='#fffaf0'?'#c0392b':'#fffaf0')});
+    [[62,390,'#fffaf0'],[70,394,'#fffaf0'],[112,386,'#c0392b']].forEach(([a,b,col])=>{R(a-1,b-1,9,6,K);R(a,b,7,4,col);R(a+2,b+1,2,2,col==='#fffaf0'?'#c0392b':'#fffaf0')});
+    /* Q39: a cat sat on the roof ridge beside the chimney (its tail and eyes are CSS) */
+    const CB='#2a2440',CL='#6a62a0';
+    R(48,43,2,2,CB);R(53,43,2,2,CB);R(48,45,7,5,CB);R(47,49,9,5,CB);R(49,43,1,1,CL);R(54,43,1,1,CL);R(50,45,4,1,CL);R(47,49,1,5,CL);R(55,50,1,4,'#1a1030');
     return c.toDataURL();
   }
   function art(){
@@ -23421,6 +23467,134 @@ renderTitle();fit();
       b.addEventListener('click',e=>{e.stopPropagation();if(window.ACC&&ACC.adminSkip)ACC.adminSkip()})}}
   { const sg=showGate;showGate=function(){const r=sg.apply(this,arguments);try{paint()}catch(e){}return r}; }
   check();
+})();
+
+/* =========================================================================
+   Q39: THE SIGN-IN SCREEN, DRESSED (17 Nov 2026, Fable). Billy: "stretch the window downwards so there's not as much
+   free room over the bottom of the screen, and then do a Fable pass on the screen." Look only: every id, class and
+   data attribute q30 / q35 / q38 read is the game's own; nothing here changes what a tap or a key does.
+   - q30's painting grew in place (the window is 120 rows deep, was 73; the room behind the cast has a fireplace, the
+     bar with its pumps and the barkeep, kegs and the cast's own table; the foundation, lanterns, barrel, crate and
+     street moved 45 rows down; a drunk sleeps against the crate; a cat sits on the ridge). This block moves the HTML
+     pieces to match (the cast and their sill, the tossed cards, the lanterns, glows, moths, the mouse, the plaque, the
+     line under it) and adds the life: the cat's tail and eyes, the drunk's snores, a bat across the moon, a spider on
+     a thread under the eave. Transform / opacity only, six loops in all; the cast lose their drop-shadow filter (seven
+     filtered sprites in a loop is what Safari chokes on, and the sill hides the shadow anyway).
+   - the board (q35's .q35) is a tavern signboard set into the wall: planked oak with a carved and bevelled frame, brass
+     corner plates with rivets, a brass padlock and a card either side of the title, chalk slates with brass rims for
+     the two boxes, the game's own chunky buttons with a deeper bevel, a brass-rimmed slate tick. WELCOME BACK gets the
+     same slate for the address. A bad message is red chalk and loses the brass (it needs the whole line).
+   ========================================================================= */
+(function(){
+  if(typeof showGate!=='function'||typeof sprite!=='function')return;
+  const I='#1a1030';
+  /* brass: a corner plate with a rivet (drawn top-left, the other three are flipped by CSS scale), the padlock, a card,
+     a chalk tick, a chalk dust tile, the cat's tail, the bat, the spider */
+  const CORNER=sprite(16,16,P=>{P.map(1,1,[
+    'BBBBBBBBBBBBBB','BLLLLLLLLLLLDB','BLBBBBBBBBBBDB','BLB.........B.','BLB..RR.....B.','BLB.RWRR....B.','BLB.RRRD....B.','BLB..DD.....B.','BLB.........B.','BLB.........B.','BLB.........B.','BLB.........B.','BDB.........B.','BDDB.........B','BBBB..........'],
+    {B:'#6a4a10',L:'#ffe9a0',D:'#a87a1c',R:'#c89a3c',W:'#fffaf0'});P.r(1,1,13,1,'#d8a848');P.r(1,1,1,13,'#d8a848')},false);
+  const LOCK=sprite(12,14,P=>{P.map(1,1,['..SSSS..','.SLSSSS.','.SS..SS.','.SS..SS.','GGGGGGGG','GLGGGGDG','GLGGGGDG','GLGKKGDG','GLGGKGDG','GLGGGGDG','GDDDDDDG'],{S:'#c9cede',L:'#fffaf0',G:'#e8a82c',D:'#a87a1c',K:'#1a1030'})});
+  const CARD=sprite(12,14,P=>{P.map(1,1,['WWWWWWWWW','WLLLLLLLW','WLRRLLLLW','WLRRLLLLW','WLLLRRLLW','WLLLRRLLW','WLLLLLRRW','WLLLLLRRW','WLLLLLLLW','WDDDDDDDW','WWWWWWWWW'],{W:'#fffaf0',L:'#fbeccb',R:'#c0392b',D:'#d9c08f'})});
+  const TICK=sprite(10,10,P=>P.map(0,0,['........CC','.......CCC','......CCC.','CC...CCC..','CCC.CCC...','.CCCCC....','..CCC.....','...C......'],{C:'#f4f0ff'}),false);
+  const DUST=sprite(8,8,P=>{P.p(1,2,'rgba(255,255,255,.06)');P.p(5,6,'rgba(255,255,255,.06)');P.p(6,1,'rgba(255,255,255,.04)');P.p(3,5,'rgba(255,255,255,.04)')},false);
+  const TAIL=sprite(9,5,P=>P.map(0,0,['.......BL','......B.B','......B..','BBBBBBB..','L........'],{B:'#2a2440',L:'#6a62a0'}),false);
+  /* the carving on the lower half of the WELCOME BACK board: the four suits cut into the wood (dark, with a lit edge) */
+  const SUITS=sprite(52,10,P=>{const D='#3a2010',L='#c89458';
+    const S=[['....D....','...DDD...','..DDDDD..','.DDDDDDD.','DDDDDDDDD','DDD.D.DDD','....D....','...DDD...'],
+      ['.DD...DD.','DDDD.DDDD','DDDDDDDDD','DDDDDDDDD','.DDDDDDD.','..DDDDD..','...DDD...','....D....'],
+      ['...DDD...','...DDD...','.DDDDDDD.','DDDDDDDDD','DDDDDDDDD','.DD.D.DD.','....D....','...DDD...'],
+      ['....D....','...DDD...','..DDDDD..','.DDDDDDD.','..DDDDD..','...DDD...','....D....','.........']];
+    S.forEach((rows,i)=>{P.map(i*13,1,rows,{D:L});P.map(i*13,0,rows,{D})})},false);
+  const BAT=sprite(14,7,P=>P.map(0,0,['B...........B.','BB.........BB.','BBB..BBB..BBB.','.BBBBBBBBBBB..','..BBBBEBEBB...','...BB.BBB.BB..','........B.....'],{B:'#2a2440',E:'#ffd34a'}),false);
+  const SPIDER=sprite(9,7,P=>P.map(0,0,['....B....','.B..B..B.','..BBBBB..','BBBBBBBBB','..BEBEB..','.B.BBB.B.','B.......B'],{B:'#1a1030',E:'#ffd34a'}),false);
+  const st=document.createElement('style');st.id='q39css';
+  st.textContent=`
+/* ---------- the scene's HTML pieces, moved to the taller window ---------- */
+#gate .crowd{top:544px}
+#gate .crowd img{filter:none}
+#gate .q30room{top:380px;height:230px}
+#gate .fly:nth-of-type(2),#gate .fly:nth-of-type(3),#gate .fly:nth-of-type(4){top:540px}
+#gate .q30lamp{top:630px}
+#gate .q30glow{top:590px}
+#gate .q30moth{top:650px}
+#gate .q30moth:nth-of-type(3){top:662px}
+#gate .q30mouse{top:782px}
+#gate .go{left:56px;right:56px;top:640px;font-size:20px}
+#gate .q30nail{top:646px}
+#gate.out35 .q30nail{display:none}
+#gate .sub{top:704px}
+#gate.out35 .sub{top:650px}
+/* ---------- the life ---------- */
+#gate .q39tail{position:absolute;left:110px;top:98px;width:18px;height:10px;background:url(${TAIL}) 0 0/100% 100%;image-rendering:pixelated;transform-origin:1px 8px;pointer-events:none;animation:q39tail 2.6s ease-in-out infinite alternate}
+@keyframes q39tail{from{transform:rotate(-10deg)}to{transform:rotate(14deg)}}
+#gate .q39eyes{position:absolute;left:100px;top:92px;width:2px;height:2px;background:#ffd34a;box-shadow:6px 0 0 #ffd34a;pointer-events:none;animation:q39blink 5.2s steps(1) infinite}
+@keyframes q39blink{0%,91%{opacity:1}92%,96%{opacity:0}97%{opacity:1}}
+#gate .q39z{position:absolute;left:338px;top:722px;font:700 11px var(--pix);color:#e8dcff;text-shadow:var(--out);opacity:0;pointer-events:none;z-index:4;animation:q39z 3.2s ease-out var(--d) infinite}
+@keyframes q39z{0%{transform:translate(0,0) scale(.5);opacity:0}15%{opacity:1}100%{transform:translate(8px,-30px) scale(1.25);opacity:0}}
+#gate .q39bat{position:absolute;left:424px;top:46px;width:28px;height:14px;background:url(${BAT}) 0 0/100% 100%;image-rendering:pixelated;opacity:0;pointer-events:none;animation:q39bat 23s linear 6s infinite}
+@keyframes q39bat{0%,69%{transform:translate(0,0);opacity:0}70%{opacity:1}74%{transform:translate(-80px,-12px)}78%{transform:translate(-160px,4px)}82%{transform:translate(-240px,-14px)}86%{transform:translate(-320px,2px)}90%{transform:translate(-400px,-10px)}93%{transform:translate(-470px,-4px);opacity:1}94%,100%{transform:translate(-490px,-4px);opacity:0}}
+#gate .q39spider{position:absolute;left:386px;top:168px;width:18px;height:14px;background:url(${SPIDER}) 0 0/100% 100%;image-rendering:pixelated;pointer-events:none;z-index:7;animation:q39spider 11s ease-in-out infinite}
+#gate .q39spider::before{content:'';position:absolute;left:8px;bottom:12px;width:2px;height:60px;background:rgba(255,250,240,.55)}
+@keyframes q39spider{0%,8%{transform:translateY(0)}30%,58%{transform:translateY(34px)}62%{transform:translateY(28px)}66%{transform:translateY(34px)}88%,100%{transform:translateY(0)}}
+/* ---------- the signboard ---------- */
+#gate .q35{padding:9px 16px 0;background-color:#80502a;
+  background-image:repeating-linear-gradient(90deg,rgba(255,224,170,.06) 0 1px,transparent 1px 7px,rgba(0,0,0,.07) 7px 8px,transparent 8px 19px,rgba(255,224,170,.05) 19px 20px,transparent 20px 31px),
+    repeating-linear-gradient(0deg,rgba(0,0,0,.26) 0 2px,rgba(255,210,150,.12) 2px 3px,transparent 3px 24px),
+    linear-gradient(180deg,#95633a 0,#80502a 40%,#744523 100%);
+  background-position:0 0,0 14px,0 0;background-repeat:repeat,repeat,no-repeat;
+  box-shadow:inset 0 0 0 2px #1a1030,inset 3px 3px 0 2px #d4a060,inset -3px -3px 0 2px #4a2a12,inset 0 0 0 7px #3a2010,inset 0 0 0 8px #2a1408,inset 0 10px 0 8px rgba(255,230,180,.07),inset 0 -10px 0 8px rgba(0,0,0,.16)}
+#gate .q35::before,#gate .q35::after{display:none}
+#gate .q35 h3{display:flex;align-items:center;justify-content:center;gap:9px;height:16px;margin:0 0 6px;font-size:12px;line-height:16px;letter-spacing:1px;color:#ffe9a0;text-shadow:2px 2px 0 #2a1408,0 0 0 transparent;overflow:hidden}
+#gate .q35 h3::before,#gate .q35 h3::after{content:'';flex:none;width:12px;height:14px;background:0 0/100% 100% no-repeat;image-rendering:pixelated}
+#gate .q35 h3::before{background-image:url(${LOCK})}
+#gate .q35 h3::after{background-image:url(${CARD})}
+#gate .q35 h3.bad{color:#ffb0a0;text-shadow:2px 2px 0 #2a1408}
+#gate .q35 h3.bad::before,#gate .q35 h3.bad::after{display:none}
+#gate .q35 input[type=email],#gate .q35 input[type=password]{height:30px;margin:0 0 6px;padding:4px 10px;color:#f4f0ff;caret-color:#ffc21a;letter-spacing:.5px;
+  background:#272638 url(${DUST}) 0 0/16px 16px;
+  box-shadow:inset 0 0 0 2px #1a1030,inset 0 0 0 4px #c89a3c,inset 0 0 0 5px #6a4a12,inset 4px 4px 0 5px rgba(0,0,0,.32),inset 0 -1px 0 5px rgba(255,255,255,.05)}
+#gate .q35 input::placeholder{color:#8e8aa8;letter-spacing:1px}
+#gate .q35 input:focus{box-shadow:inset 0 0 0 2px #1a1030,inset 0 0 0 4px #ffc21a,inset 0 0 0 5px #a87010,inset 4px 4px 0 5px rgba(0,0,0,.32)}
+#gate .q35 .q35b{gap:10px}
+#gate .q35 .q35b .btn{font-size:12px;letter-spacing:1px;min-height:30px;
+  box-shadow:var(--pxb),0 3px 0 3px rgba(13,10,24,.42),inset 0 4px 0 rgba(255,255,255,.4),inset 0 -5px 0 rgba(0,0,0,.28),inset 3px 0 0 rgba(255,255,255,.14),inset -3px 0 0 rgba(0,0,0,.12)}
+#gate .q35 .q35b .btn.g{text-shadow:0 1px 0 #b8f090}
+#gate .q35 .q35b .btn.y{text-shadow:0 1px 0 #ffe9a0}
+#gate .q35 .q35r{margin:9px 0 0;gap:7px;font-size:9px;color:#f6e6c4;text-shadow:1px 1px 0 #2a1408}
+#gate .q35 .q35r input{appearance:none;-webkit-appearance:none;width:16px;height:16px;margin:0;border:0;border-radius:0;background:#272638;cursor:pointer;
+  box-shadow:inset 0 0 0 2px #1a1030,inset 0 0 0 3px #c89a3c,inset 0 0 0 4px #6a4a12,inset 3px 3px 0 4px rgba(0,0,0,.32)}
+#gate .q35 .q35r input:checked{background:#272638 url(${TICK}) 50% 50%/10px 10px no-repeat}
+#gate .q35 .q35r input:focus-visible{outline:2px solid var(--goldl);outline-offset:1px}
+#gate .q35 .q35m{color:#f6e6c4;text-shadow:1px 1px 0 #2a1408}
+#gate .q35 .q35m.bad{color:#ffb0a0}
+#gate .q35 .q35w{margin:12px auto 8px;padding:8px 12px;max-width:300px;font-size:12px;color:#f4f0ff;letter-spacing:.5px;background:#272638 url(${DUST}) 0 0/16px 16px;
+  box-shadow:inset 0 0 0 2px #1a1030,inset 0 0 0 4px #c89a3c,inset 0 0 0 5px #6a4a12,inset 4px 4px 0 5px rgba(0,0,0,.32)}
+#gate .q35 .q35o{color:#ffe9a0;text-shadow:1px 1px 0 #2a1408}
+#gate .q35:has(.q35w)::after{content:'';display:block;position:absolute;left:50%;top:auto;right:auto;bottom:18px;width:104px;height:20px;margin-left:-52px;background:url(${SUITS}) 0 0/100% 100%;box-shadow:none;image-rendering:pixelated;opacity:.9;pointer-events:none}
+`;
+  document.body.appendChild(st);
+  /* the corner plates: one sprite, turned for each corner (a background image can't be flipped, so three are elements) */
+  const st2=document.createElement('style');st2.textContent=`
+#gate .q39c{position:absolute;width:16px;height:16px;background:url(${CORNER}) 0 0/100% 100%;image-rendering:pixelated;pointer-events:none}
+#gate .q39c.tl{left:4px;top:4px}#gate .q39c.tr{right:4px;top:4px;transform:scaleX(-1)}#gate .q39c.bl{left:4px;bottom:4px;transform:scaleY(-1)}#gate .q39c.br{right:4px;bottom:4px;transform:scale(-1)}`;
+  document.body.appendChild(st2);
+  function dress(){
+    const el=document.getElementById('gate');if(!el||el.hidden)return;
+    /* q30 appends its own stylesheet on the first showGate(), after this one: these overrides go to the end of the body
+       again each time, so they come last whatever the order */
+    document.body.appendChild(st);document.body.appendChild(st2);
+    if(el.querySelector('.q39tail'))return;
+    /* <b> tags on purpose: the game's own pieces are counted by nth-of-type in q30 */
+    el.insertAdjacentHTML('afterbegin',`<b class="q39bat"></b><b class="q39tail"></b><b class="q39eyes"></b><b class="q39spider"></b><b class="q39z" style="--d:0s">Z</b><b class="q39z" style="--d:1.6s;left:346px">z</b>`);
+  }
+  /* the brass corner plates live inside the board; q35 redraws its insides (b.innerHTML=boardHTML()) on log in and out,
+     which drops them, so a watcher puts them back */
+  function corners(){const b=document.querySelector('#gate .q35');if(b&&!b.querySelector('.q39c'))b.insertAdjacentHTML('beforeend','<b class="q39c tl"></b><b class="q39c tr"></b><b class="q39c bl"></b><b class="q39c br"></b>')}
+  const sg=showGate;
+  showGate=function(){const r=sg.apply(this,arguments);try{dress()}catch(e){console.error('q39',e)}return r};
+  try{if(window.LOCKOUT)window.LOCKOUT.showGate=showGate}catch(e){}
+  try{new MutationObserver(corners).observe(document.getElementById('gate'),{childList:true,subtree:true})}catch(e){}
+  try{dress();corners()}catch(e){}
 })();
 
 /* test hook: ?board=N starts a bot match on round N (board N), &opp=1..7 players, &speed */
