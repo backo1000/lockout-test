@@ -19431,6 +19431,42 @@ function openNews(force){
         G.players.forEach((p,q)=>{if(q!==pi&&p.ai&&Math.random()<.4)say(q,'gotburned')});
       }}
   });
+  /* SLY PEEK (17 Nov 2026, Billy, laptop; Monopoly Deal's Sly Deal) takes X-RAY's place: same key 'xray', so it keeps X-Ray's
+     picture, sound and AI ranking. Look at one of someone's cards (privately), then you may swap it for one of yours. They see a
+     swap happen, but never what they got or what you took. A Shield in their pocket, or a NO U!, still stops it. */
+  async function peekOne(pi,t,s){
+    const c=P(t).slots[s];if(!c)return;SFX.peek();
+    if(isBot(pi)){G.know[pi].add(c.id);G.eyes.add(keyOf(t,s));render();await wait(900);G.eyes.delete(keyOf(t,s));render();return}
+    const seat=P(pi).remote?pi:0;let V=G.priv.get(seat);if(!V)G.priv.set(seat,V=new Set());
+    V.add(keyOf(t,s));render();netPushNow();await wait(2200);V.delete(keyOf(t,s));render();netPushNow();
+    G.know[pi].add(c.id)}
+  Object.assign(WILD.xray,{n:1,name:'SLY PEEK',col:'#5a4488',block:true,
+    say:"look at one of someone's cards, then you may swap it for one of yours. They never see what they got",
+    can:pi=>oppKeys(pi,{noShield:true}).length>0&&live(pi).some(s=>!shielded(pi,s)),
+    ai:{want:()=>Math.random()<.7,target:pi=>leader(pi)},
+    async use(pi){
+      const keys=oppKeys(pi,{noShield:true});
+      const k=await io.pick(pi,keys,"SLY PEEK: TAP <b>ONE OF SOMEONE ELSE'S CARDS</b> TO LOOK AT IT.",()=>pickOf(pi,keys,WILD.xray.ai.target(pi)));
+      if(!k)return;const {p:t,s:ts}=unkey(k);if(await wildBlock(pi,t,'xray'))return;
+      tellAll('SLY PEEK!',nmS(pi)+(pi===0&&!CLIENT()?' TAKE':' TAKES')+' A SLY LOOK AT ONE OF '+nmS(t)+"'S CARDS");await wait(700);
+      G.sel.add(k);render();await peekOne(pi,t,ts);
+      const theirs=P(t).slots[ts];if(!theirs||shielded(t,ts)){G.sel.clear();render();return}
+      const tv=val(theirs),worst=knownWorst(pi);
+      const yes=await io.yes(pi,`SLY PEEK: THAT CARD IS WORTH <b>${tv}</b>. <b>SWAP IT</b> FOR ONE OF YOURS? THEY WON'T SEE WHAT THEY GET.`,'SWAP IT',
+        ()=>worst.s>=0&&tv<worst.v,{title:'SLY PEEK',no:'LEAVE IT'});
+      if(!yes){G.sel.clear();render();const m=portMid(pi);pop('JUST LOOKING.',m.x,m.y,'#c8b8ff');await wait(500);return}
+      const mine=ownKeys(pi,s=>!shielded(pi,s));
+      const k2=await io.pick(pi,mine,'SLY PEEK: TAP <b>ONE OF YOUR CARDS</b> TO SWAP IN.',()=>worst.s>=0&&!shielded(pi,worst.s)?keyOf(pi,worst.s):rnd(mine));
+      G.sel.clear();render();if(!k2)return;
+      const ms=unkey(k2).s,ca=P(pi).slots[ms],cb=P(t).slots[ts];if(!ca||!cb)return;
+      await crit(async()=>{G.hide.add(k2);G.hide.add(k);render();
+        await Promise.all([fly(ca,slotRect(pi,ms),slotRect(t,ts),false,false,620),fly(cb,slotRect(t,ts),slotRect(pi,ms),false,false,620)]);
+        P(pi).slots[ms]=cb;P(t).slots[ts]=ca;delete ca.sh;delete cb.sh;G.hide.delete(k2);G.hide.delete(k);SFX.place();render()});
+      /* they don't know what they got (nor does anyone else who knew it), only you know what you took */
+      G.know.forEach((K,q)=>{if(q!==pi){K.delete(ca.id);K.delete(cb.id)}});G.know[pi].add(cb.id);
+      const m=portMid(t);pop('SWIPED!',m.x,m.y,'#c8b8ff');if(P(t).ai)say(t,'gotburned',true);if(P(pi).ai)say(pi,'steal');
+    }});
+
   /* NO U!: ask a seat (a friend online, the AI, or you here) if they want to say NO U! */
   const NOU_MS=5000;
   async function askNoU(q,text,k,pi,on){
@@ -19758,7 +19794,7 @@ function openNews(force){
     let how=use?'TAP AGAIN TO USE IT.':ok&&G.wait&&G.wait.wild?'TAP IT TO USE IT NOW.':'USE IT AT THE START OF YOUR TURN.';
     if(k==='lockpick'&&G.lockoutBy==null)how='ONLY WORKS ONCE SOMEONE CALLS LOCKOUT.';
     if(!CLIENT()&&usedThisTurn(0)&&G.cur===0)how='ONE WILD CARD A TURN: USE IT NEXT TURN.';
-    if(k==='shield')how+=' HOLD IT AND IT CAN BLOCK AN X-RAY AIMED AT YOU.';
+    if(k==='shield')how+=' HOLD IT AND IT CAN BLOCK A SLY PEEK AIMED AT YOU.';
     return `<div class="q16tipc"><div class="card" style="position:relative;width:56px;height:78px">${faceHTML(c,56)}</div></div><div class="q16tipt"><b style="box-shadow:inset 0 -3px 0 ${W.col}">${W.name}</b><span>${W.say.toUpperCase()}.</span><em>${how}</em></div>`}
   function tipShow(pi,use,ms){const st=$('stage');if(!st||!P(pi)||!P(pi).pocket)return tipHide();let t=$('q16tip');if(!t){t=document.createElement('div');t.id='q16tip';st.appendChild(t)}
     t.innerHTML=tipHTML(pi,use);const r=pocketRect(pi),W=230;let x=r.x+r.w/2-W/2,y=pi===0?r.y-112:r.y+r.h+8;x=Math.max(6,Math.min(420-W-6,x));if(y<44)y=r.y+r.h+8;
@@ -19839,7 +19875,7 @@ function openNews(force){
 
   /* ---------- the rules ---------- */
   { const or=openRules;openRules=function(){const r=or.apply(this,arguments);try{const b=$('rulesBox');
-      if(b&&!b.querySelector('.q16rules'))b.insertAdjacentHTML('beforeend',`<div class="q16rules"><h3>LOCKOUT WILD</h3><p>WILD MODE ADDS 14 WILD CARDS. DRAW ONE AND YOU CAN USE IT STRAIGHT AWAY OR KEEP IT IN YOUR POCKET, THEN YOU DRAW AGAIN. YOU HOLD ONE AT A TIME: TAP IT AT THE START OF YOUR TURN TO USE IT, OR USE, KEEP OR SWAP IT WHEN YOU DRAW ANOTHER.</p><ul>${Object.values(WILD).map(W=>`<li><b style="color:${W.col}">${W.name}</b> (${W.n}): ${W.say.toUpperCase()}.</li>`).join('')}</ul><p>YOU CAN PLAY ONE WILD CARD A TURN. A SHIELD IN YOUR POCKET CAN BLOCK AN X-RAY AIMED AT YOU. YOU DRAW AT MOST ONE WILD CARD A TURN.</p></div>`)}catch(e){}return r}; }
+      if(b&&!b.querySelector('.q16rules'))b.insertAdjacentHTML('beforeend',`<div class="q16rules"><h3>LOCKOUT WILD</h3><p>WILD MODE ADDS 14 WILD CARDS. DRAW ONE AND YOU CAN USE IT STRAIGHT AWAY OR KEEP IT IN YOUR POCKET, THEN YOU DRAW AGAIN. YOU HOLD ONE AT A TIME: TAP IT AT THE START OF YOUR TURN TO USE IT, OR USE, KEEP OR SWAP IT WHEN YOU DRAW ANOTHER.</p><ul>${Object.values(WILD).map(W=>`<li><b style="color:${W.col}">${W.name}</b> (${W.n}): ${W.say.toUpperCase()}.</li>`).join('')}</ul><p>YOU CAN PLAY ONE WILD CARD A TURN. A SHIELD IN YOUR POCKET CAN BLOCK A SLY PEEK AIMED AT YOU. YOU DRAW AT MOST ONE WILD CARD A TURN.</p></div>`)}catch(e){}return r}; }
 
   /* ---------- styles (W4 dresses these with vines) ---------- */
   const st=document.createElement('style');st.textContent=`
@@ -24531,6 +24567,7 @@ renderTitle();fit();
     ['snap','NO U!: KEEP IT IN YOUR POCKET. WHEN SOMEONE PLAYS A WILD CARD, SAY NO U! AND IT IS CANCELLED. THEY CAN NO U! BACK.'],
     ['snap',"IT'S MY BIRTHDAY: EVERYONE GETS A PRESENT, A CARD FACE DOWN. ONLY THE BIRTHDAY PLAYER PEEKS AT THEIRS."],
     ['lock','THE TREASURE CHEST NOW HAS THREE KEYS EACH: EVERY CORRECT SNAP TURNS ONE OF YOURS. FIRST TO THREE TAKES THE GOLD -2.'],
+    ['snap',"SLY PEEK REPLACES X-RAY: LOOK AT ONE OF SOMEONE'S CARDS, THEN SWAP IT FOR ONE OF YOURS IF YOU LIKE. THEY NEVER SEE WHAT THEY GOT."],
     ['lock','GOT FORFEITED FOR TOO MANY CARDS? YOU ARE BACK IN THE NEXT ROUND.'],
   ]})}catch(e){}
 })();
