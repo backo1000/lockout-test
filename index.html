@@ -18041,7 +18041,7 @@ function openNews(force){
     const draw=()=>{box.innerHTML=rkHTML();box.classList.toggle('rkwild',RKV.w);
       box.querySelectorAll('[data-rkw]').forEach(b=>b.onclick=()=>{const w=b.dataset.rkw==='1';if(w===RKV.w)return;RKV.w=w;SFX.flip();draw()});
       box.querySelector('#rkBack').onclick=()=>{SFX.extra('click');ov.hidden=true;RKV.w=PROF.rkLast==='wild';document.getElementById('title').hidden=false;renderTitle()};
-      box.querySelector('#rkGo').onclick=()=>{SFX.extra('click');ov.hidden=true;mmStart('ranked',rkBet)};   /* 17 Nov hotfix (Billy): FIND A MATCH goes through the STANDARD / WILD chooser too, titled RANKED */
+      box.querySelector('#rkGo').onclick=()=>{SFX.extra('click');ov.hidden=true;mmStart('ranked',rkBet,RKV.w?'wild':'standard')};   /* 17 Nov (Billy, laptop q40): straight into the queue on the ladder the switch is on. Was: 17 Nov hotfix (Billy): FIND A MATCH goes through the STANDARD / WILD chooser too, titled RANKED */
       box.querySelectorAll('[data-rkb]').forEach(b=>b.onclick=()=>{rkBet=+b.dataset.rkb;SFX.flip();draw()});
       const cur=box.querySelector('.rkt.cur');if(cur&&cur.scrollIntoView)cur.scrollIntoView({block:'nearest'})};
     draw();ov.hidden=false;document.getElementById('title').hidden=true};
@@ -23595,6 +23595,40 @@ renderTitle();fit();
   try{if(window.LOCKOUT)window.LOCKOUT.showGate=showGate}catch(e){}
   try{new MutationObserver(corners).observe(document.getElementById('gate'),{childList:true,subtree:true})}catch(e){}
   try{dress();corners()}catch(e){}
+})();
+
+/* =========================================================================
+   Q40: RANKED'S WILD TOGGLE (17 Nov 2026, Billy, laptop).
+   - The WILD half of the STANDARD / WILD switch on the Ranked screen wears Wild's overgrown look, like the WILD button
+     on the menu: green planks, a dark green outline on the words, and q17's vines (their sprites copied off the menu
+     button, so they are the same drawings) swaying over it. Picked or not, it is green; picked it is brighter and lifted.
+   - FIND A MATCH goes straight into the queue on the ladder the switch is on (one small edit in q12's openRanked:
+     mmStart('ranked',rkBet,RKV.w?'wild':'standard')). Only QUICK PLAY still asks STANDARD or WILD.
+   ========================================================================= */
+(function(){
+  let box=null,watching=false; /* the Ranked panel is built the first time it opens */
+  const css=document.createElement('style');css.id='q40css';
+  css.textContent=`#rkpBox .rks.w{position:relative;overflow:visible;background:#2f6a28;background-image:linear-gradient(#3a8a30 0 50%,#2f6a28 50%);color:#cfe8b8;
+  text-shadow:2px 0 0 #12300a,-2px 0 0 #12300a,0 2px 0 #12300a,0 -2px 0 #12300a}
+#rkpBox .rks.w.on{background:#2f8a25;background-image:linear-gradient(#3fa34d 0 50%,#2f8a25 50%);color:#fff3a0;
+  text-shadow:2px 0 0 #12300a,-2px 0 0 #12300a,0 2px 0 #12300a,0 -2px 0 #12300a,0 4px 0 #12300a;
+  box-shadow:0 0 0 3px #12300a,0 4px 0 3px rgba(13,10,24,.4),inset 0 4px 0 #6fd13c,inset 0 -5px 0 #1f5a1c}
+#rkpBox .rks.w>span{position:relative;z-index:2}
+#rkpBox .rks.w .q17v{position:absolute;image-rendering:pixelated;pointer-events:none;z-index:1}
+#rkpBox .rks.w .q17v.t{left:-4px;top:-11px;width:110px;height:32px;transform-origin:0 20%;animation:q17sway 6s ease-in-out infinite alternate}
+#rkpBox .rks.w .q17v.c{left:-8px;top:-14px;width:28px;height:33px;transform-origin:100% 60%;animation:q17sway 4.6s ease-in-out -2s infinite alternate}
+#rkpBox .rks.w .q17v.b{right:-4px;bottom:-6px;width:40px;height:16px;transform-origin:100% 100%;animation:q17sway 5.4s ease-in-out -1s infinite alternate}
+#rkpBox .rks.w:not(.on) .q17v{opacity:.75}`;
+  document.head.appendChild(css);
+  /* the vines: q17's own sprites, taken off the menu's WILD button */
+  function dress(){if(!box)return;const b=box.querySelector('.rks.w');if(!b||b.querySelector('.q17v'))return;
+    const src=k=>{const i=document.querySelector('#btnWild .q17v.'+k);return i&&i.getAttribute('src')};
+    if(!src('t'))return;
+    if(!b.querySelector('span'))b.innerHTML=`<span>${b.textContent}</span>`;
+    b.insertAdjacentHTML('beforeend',['t','c','b'].map(k=>`<img class="q17v ${k}" src="${src(k)}" alt="">`).join(''))}
+  function hook(){box=document.getElementById('rkpBox');if(!box)return;if(!watching){watching=true;new MutationObserver(dress).observe(box,{childList:true,subtree:true})}dress()}
+  const or=window.openRanked;if(typeof or==='function')window.openRanked=function(){const r=or.apply(this,arguments);try{hook()}catch(e){}return r};
+  hook();
 })();
 
 /* test hook: ?board=N starts a bot match on round N (board N), &opp=1..7 players, &speed */
