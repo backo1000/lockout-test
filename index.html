@@ -23964,6 +23964,11 @@ renderTitle();fit();
 .q35 .q35m.bad{color:#ffb0a0}
 .q35 .q35w{font-size:12px;color:#fffaf0;margin:16px 0 10px;word-break:break-all}
 .q35 .q35o{background:none;border:0;padding:4px;font:9px var(--pix);color:#f2dcb8;text-decoration:underline;cursor:pointer}
+.q35 .q35l{display:flex;align-items:center;justify-content:space-between;gap:4px;margin-top:5px}
+.q35 .q35l .q35r{margin:0}
+.q35 .q35l .q35o{padding:3px 2px;margin:0}
+.q35 a.q35o{text-decoration:underline}
+.q35 #q35d{display:block;width:100%;box-sizing:border-box;margin:6px 0;height:30px;padding:4px 9px;border:0;border-radius:0;font:16px var(--pix);color:#fffaf0;background:#1a1030;box-shadow:inset 0 0 0 2px #a82a2a;outline:none;-webkit-appearance:none;appearance:none;-webkit-user-select:text;user-select:text}
 .q35g{position:absolute;left:0;right:0;top:590px;z-index:6;text-align:center}
 .q35g button{background:none;border:0;font:10px var(--pix);color:#c9b8f0;text-decoration:underline;cursor:pointer;padding:6px}
 .q35.shake{animation:q35sh .35s}
@@ -23971,13 +23976,21 @@ renderTitle();fit();
   document.head.appendChild(css);
 
   function boardHTML(){
-    if(A)return `<h3>WELCOME BACK</h3><div class="q35w">${esc(A.email||'')}</div><div class="q35m">YOUR PROGRESS IS SAVED TO YOUR ACCOUNT.</div><button class="q35o" data-q35="out">NOT YOU? LOG OUT</button>`;
+    if(recov)return `<h3 id="q35m">CHOOSE A NEW PASSWORD</h3>
+      <input type="password" id="q35p" placeholder="NEW PASSWORD" autocomplete="new-password">
+      <div class="q35b"><button class="btn g" data-q35="newpw">SAVE IT</button></div>
+      <div class="q35l"><button class="q35o" data-q35="cancel">CANCEL</button><a class="q35o" href="privacy.html" target="_blank" rel="noopener">PRIVACY</a></div>`;
+    if(A&&delAsk)return `<h3 id="q35m" class="bad">DELETE YOUR ACCOUNT?</h3><div class="q35m bad">YOUR PROGRESS, RANK AND TOP 500 ROWS GO FOR GOOD. TYPE DELETE TO BE SURE.</div>
+      <input type="email" id="q35d" placeholder="TYPE DELETE" autocomplete="off" autocapitalize="characters" spellcheck="false">
+      <div class="q35b"><button class="btn r" data-q35="delgo">DELETE IT</button><button class="btn" data-q35="cancel">KEEP IT</button></div>`;
+    if(A)return `<h3>WELCOME BACK</h3><div class="q35w">${esc(A.email||'')}</div><div class="q35m">YOUR PROGRESS IS SAVED TO YOUR ACCOUNT.</div>
+      <div class="q35l"><button class="q35o" data-q35="out">NOT YOU? LOG OUT</button><button class="q35o" data-q35="del">DELETE ACCOUNT</button><a class="q35o" href="privacy.html" target="_blank" rel="noopener">PRIVACY</a></div>`;
     let remember=true;try{remember=localStorage.getItem('lockoutAccRem')!=='0'}catch(e){}
     return `<h3 id="q35m">SIGN IN TO KEEP YOUR PROGRESS</h3>
       <input type="email" id="q35e" placeholder="EMAIL" autocomplete="email" autocapitalize="off" autocorrect="off" spellcheck="false" inputmode="email">
       <input type="password" id="q35p" placeholder="PASSWORD" autocomplete="current-password">
       <div class="q35b"><button class="btn g" data-q35="in">LOG IN</button><button class="btn y" data-q35="up">SIGN UP</button></div>
-      <label class="q35r"><input type="checkbox" id="q35k"${remember?' checked':''}>REMEMBER ME</label>`}
+      <div class="q35l"><label class="q35r"><input type="checkbox" id="q35k"${remember?' checked':''}>REMEMBER ME</label><button class="q35o" data-q35="forgot">FORGOT PASSWORD?</button><a class="q35o" href="privacy.html" target="_blank" rel="noopener">PRIVACY</a></div>`}
   let busy=false;
   function say(t,bad){const m=$('q35m');if(m){m.textContent=t;m.classList.toggle('bad',!!bad)}}
   function shake(){const b=document.querySelector('.q35');if(!b)return;b.classList.remove('shake');void b.offsetWidth;b.classList.add('shake')}
@@ -24000,6 +24013,40 @@ renderTitle();fit();
       draw();enter();
     }finally{busy=false}}
   function enter(){gateGo0()}
+  /* ---------- 17 Nov (Billy, laptop): forgot password, the link back, and deleting your account ---------- */
+  let recov=null,delAsk=false;
+  async function forgot(){if(busy)return;const e=($('q35e').value||'').trim();
+    if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(e)){say('TYPE YOUR EMAIL ABOVE FIRST.',1);shake();return}
+    busy=true;say('SENDING...');
+    try{const r=await call('/auth/v1/recover?redirect_to='+encodeURIComponent(location.origin+location.pathname),{method:'POST',body:{email:e}});
+      if(!r.ok&&r.st!==400){say(why(r),1);return}
+      say('IF THAT EMAIL HAS AN ACCOUNT, A RESET LINK IS ON ITS WAY.')}finally{busy=false}}
+  async function newPw(){if(busy||!recov)return;const p=$('q35p').value||'';
+    if(p.length<6){say('PASSWORD: AT LEAST 6 CHARACTERS.',1);shake();return}
+    busy=true;say('SAVING...');
+    try{const r=await call('/auth/v1/user',{method:'PUT',at:recov.access_token,body:{password:p}});
+      if(!r.ok){say(why(r),1);shake();return}
+      const j=Object.assign({},recov,{user:(r.j&&r.j.id)?r.j:recov.user});recov=null;
+      try{history.replaceState(null,'',location.pathname+location.search)}catch(x){}
+      took(j,(j.user&&j.user.email)||'',true);say('PASSWORD CHANGED. YOU\'RE IN.');
+      const reload=await syncIn();if(reload){setTimeout(()=>location.reload(),500);return}
+      draw()}finally{busy=false}}
+  async function delMe(){if(busy||!A)return;
+    if(((($('q35d')||{}).value)||'').trim().toUpperCase()!=='DELETE'){say('TYPE DELETE TO BE SURE.',1);shake();return}
+    busy=true;say('DELETING...');
+    try{if(!await fresh()){say('LOG IN AGAIN FIRST.',1);return}
+      const r=await call('/rest/v1/rpc/lockout_delete_me',{method:'POST',at:A.at,body:{}});
+      if(!r.ok){say(r.st===404?"CAN'T DELETE YET: EMAIL US.":why(r),1);return}
+      A=null;delAsk=false;aSave();try{T5.useSession(null)}catch(x){}
+      try{localStorage.removeItem(PROFILE_KEY);localStorage.removeItem(NAMEK)}catch(x){}
+      say('ACCOUNT DELETED. BYE!');setTimeout(()=>location.reload(),1600)}finally{busy=false}}
+  /* the email links come back with the session in the address: a reset link asks for a new password, a confirm link signs you in */
+  (function(){try{const h=new URLSearchParams((location.hash||'').replace(/^#/,''));const at=h.get('access_token');if(!at)return;
+    const j={access_token:at,refresh_token:h.get('refresh_token'),expires_in:+h.get('expires_in')||3600,user:{}};
+    try{const p=JSON.parse(atob(at.split('.')[1].replace(/-/g,'+').replace(/_/g,'/')));j.user={id:p.sub,email:p.email}}catch(x){}
+    if(h.get('type')==='recovery'){recov=j;return}
+    history.replaceState(null,'',location.pathname+location.search);
+    if(took(j,j.user.email||'',true))syncIn().then(re=>{if(re)location.reload();else draw()})}catch(e){}})();
   async function logout(){const at=A&&A.at;A=null;aSave();try{T5.useSession(null)}catch(e){}
     if(at)call('/auth/v1/logout',{method:'POST',at});draw()}
 
@@ -24009,7 +24056,9 @@ renderTitle();fit();
       ['pointerdown','pointerup'].forEach(t=>b.addEventListener(t,e=>e.stopPropagation()));
       b.addEventListener('keydown',e=>{e.stopPropagation();if(e.key==='Enter'){e.preventDefault();if(e.target.id==='q35e')$('q35p').focus();else if(e.target.id==='q35p')go('in')}});
       b.addEventListener('click',e=>{e.stopPropagation();const t=e.target.closest('[data-q35]');if(!t)return;const k=t.dataset.q35;
-        if(k==='in'||k==='up')go(k);else if(k==='out')logout()});}
+        if(k==='in'||k==='up')go(k);else if(k==='out')logout();
+        else if(k==='forgot')forgot();else if(k==='newpw')newPw();else if(k==='del'){delAsk=true;draw()}else if(k==='delgo')delMe();
+        else if(k==='cancel'){delAsk=false;if(recov){recov=null;try{history.replaceState(null,'',location.pathname+location.search)}catch(x){}}draw()}});}
     const old=b.querySelector('#q35e'),ev=old&&old.value;b.innerHTML=boardHTML();if(ev&&$('q35e'))$('q35e').value=ev;
     /* no guest play (Billy, 17 Nov): you need an account to play */
   }
