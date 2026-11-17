@@ -23170,7 +23170,7 @@ renderTitle();fit();
    - When you sign in on a phone: if the account's save has at least as much XP as this phone's, this phone takes it
      (and reloads); otherwise this phone's progress is sent up. Then every profSave() is sent up a few seconds later,
      and at once when the page is hidden.
-   - PLAY AS A GUEST under the plaque plays without an account, as before (progress stays on this phone only).
+   - There is no guest play (Billy, 17 Nov): you need an account to get past this screen.
    - q34's touch layer stops at [data-tapstop], so a tap on the board never counts as a tap on the gate.
    ========================================================================= */
 (function(){
@@ -23298,11 +23298,8 @@ renderTitle();fit();
       b.addEventListener('click',e=>{e.stopPropagation();const t=e.target.closest('[data-q35]');if(!t)return;const k=t.dataset.q35;
         if(k==='in'||k==='up')go(k);else if(k==='out')logout()});}
     const old=b.querySelector('#q35e'),ev=old&&old.value;b.innerHTML=boardHTML();if(ev&&$('q35e'))$('q35e').value=ev;
-    let gl=g.querySelector('.q35g');
-    if(!A){if(!gl){gl=document.createElement('div');gl.className='q35g';gl.dataset.tapstop='1';
-        gl.innerHTML='<button>PLAY AS A GUEST (PROGRESS STAYS ON THIS PHONE)</button>';g.appendChild(gl);
-        gl.addEventListener('click',e=>{e.stopPropagation();guest=true;enter()});gl.addEventListener('pointerdown',e=>e.stopPropagation())}}
-    else if(gl)gl.remove()}
+    /* no guest play (Billy, 17 Nov): you need an account to play */
+  }
 
   /* the gate only lets you through signed in, or as a guest */
   const gateGo0=gateGo;
