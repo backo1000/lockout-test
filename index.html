@@ -24601,15 +24601,15 @@ renderTitle();fit();
   /* ------------------------------------------------------------------ the table: focus, scale, hits, debris colours */
   const CF={
     lc_clunk:{c:[210,268],s:1.45,cols:[Y,YD,ST,W],hits:[[248,210,292,3],[700,210,205,1]]},
-    lc_gavel:{c:[190,470],s:1.45,cols:[WD,WDL,WDD,W],hits:[[217,190,488,1],[434,190,488,1],[713,190,488,3]]},
-    lc_stamp:{c:[210,500],s:1.35,cols:[RD,'#ff7a6a','#7a1a2a',W],hits:[[372,210,515,3]]},
-    lc_rope:{c:[210,505],s:1.15,cols:[Y,YD,RD,W],hits:[[217,70,560,2],[287,350,560,2],[560,210,560,1]]},
-    lc_chain:{c:null,s:1.3,cols:[ST,STD,STL,WD],hits:null},
+    lc_gavel:{py:280,c:[190,470],s:1.45,cols:[WD,WDL,WDD,W],hits:[[217,190,488,1],[434,190,488,1],[713,190,488,3]]},
+    lc_stamp:{py:280,c:[210,500],s:1.35,cols:[RD,'#ff7a6a','#7a1a2a',W],hits:[[372,210,515,3]]},
+    lc_rope:{py:280,c:[210,505],s:1.15,cols:[Y,YD,RD,W],hits:[[217,70,560,2],[287,350,560,2],[560,210,560,1]]},
+    lc_chain:{py:280,c:null,s:1.3,cols:[ST,STD,STL,WD],hits:null},
     lc_siren:{c:[210,200],s:1.45,cols:[RD,Y,W,ST],hits:[[186,210,218,2]]},
-    lc_cow:{c:[210,540],s:1.35,cols:[W,'#2a2235',PK,'#d9c9b0'],hits:[[279,210,560,3]]},
+    lc_cow:{py:280,c:[210,540],s:1.35,cols:[W,'#2a2235',PK,'#d9c9b0'],hits:[[279,210,560,3]]},
     lc_vault:{c:[210,236],s:1.15,cols:[ST,STL,STD,W],hits:[[372,210,300,3],[945,190,236,1],[990,230,236,1]]},
-    lc_hand:{c:[210,580],s:1.2,cols:[GN,GNL,W,WD],hits:[[279,210,612,3]]},
-    lc_boards:{c:null,f:[210,420],s:1,cols:[WD,WDL,WDD,W],hits:[[248,210,150,1],[358,210,270,1],[468,210,500,2],[578,210,640,2]]},
+    lc_hand:{py:280,c:[210,580],s:1.2,cols:[GN,GNL,W,WD],hits:[[279,210,612,3]]},
+    lc_boards:{py:280,c:null,f:[210,420],s:1,cols:[WD,WDL,WDD,W],hits:[[248,210,150,1],[358,210,270,1],[468,210,500,2],[578,210,640,2]]},
     lc_castle:{c:null,f:[210,300],s:1,cols:[RK,RKL,RKD,Y],hits:[[341,30,780,3],[400,390,780,2],[682,null,null,1]]},
     lc_dragon:{c:null,f:[230,290],s:1,cols:[OR,Y,RD,'#2a1a10'],hits:[[573,210,300,2],[660,150,305,1],[760,270,305,1],[860,190,305,1],[960,240,305,1]]},
   };
@@ -24689,9 +24689,9 @@ renderTitle();fit();
       h+=`<i class="lj-spark" style="left:${px(fp[0]+Math.cos(a)*r-5)};top:${px(fp[1]+Math.sin(a)*r*.8-5)};--s:${rnd(1.2,2.4).toFixed(2)};--d:${Math.round(rnd(250,1200))}ms"></i>`}
     /* 2. impact */
     hits.forEach(q=>{h+=hit(q[0],q[1],q[2],q[3],cf.cols)});
-    /* 4. the name plate */
+    /* 4. the name plate: under the banner, or over it (CF[id].py) when the call's action is below it (17 Nov) */
     const who=o&&o.mine?'YOUR CALL':(o&&o.name?esc(String(o.name).toUpperCase())+"'S CALL":rar.t+' CALL');
-    h+=`<b class="lj-plate" style="--pb:${rar.b};--pl:${rar.l};--pd:${rar.d}"><small>${who}</small>${esc(c.name)}</b>`;
+    h+=`<b class="lj-plate" style="--pb:${rar.b};--pl:${rar.l};--pd:${rar.d}${cf.py?';top:'+cf.py+'px':''}"><small>${who}</small>${esc(c.name)}</b>`;
     const j=document.createElement('div');j.className='lj';j.innerHTML=h;fx.insertBefore(j,d);
     if(!window.__lcKeep)setTimeout(()=>{try{j.remove()}catch(e){}},1700);
   }
