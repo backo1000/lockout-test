@@ -304,6 +304,9 @@ table.sc tbody tr:nth-child(odd){background:rgba(255,255,255,.05)}
 .ovol:has([data-mpbet]){gap:5px}
 #titleGold{position:absolute;left:60px;right:60px;top:732px;height:30px;display:flex;align-items:center;justify-content:center;font-size:14px}
 #setupGold{text-align:center;font-size:11px;margin:-6px 0 12px}
+.rktab{text-align:center;font-size:10px;color:var(--goldl);margin:4px 0 2px}
+.rkonly{display:block;text-align:center;font-size:11px;font-weight:700;color:var(--cardl);margin:4px 0 6px;cursor:pointer}
+.rkonly input{vertical-align:-2px;margin-right:4px}.rkonly small{display:block;font-size:9px;font-weight:400;color:#b8b0d8;margin-top:2px}
 .potline{text-align:center;font-size:13px!important;font-weight:700;color:var(--gold);text-shadow:var(--out)}
 .potline.lost{color:#ff8a7a}
 .mplist span .ok{color:var(--greend);margin-left:3px}
@@ -429,7 +432,7 @@ table.sc tbody tr:nth-child(odd){background:rgba(255,255,255,.05)}
       <p id="setupQuip"></p>
       <div class="orow"><span>PLAYERS</span><div class="seg" id="segOpp"></div></div>
       <div class="orow"><span>ROUNDS</span><div class="seg" id="segRnd"></div></div>
-      <div class="orow"><span>BET</span><div class="seg" id="segBet"></div></div>
+      <div class="orow"><span>TABLE</span><div class="seg" id="segBet"></div></div>
       <p id="setupGold"></p>
       <button class="btn g bbtn pulse" id="btnStart">START</button>
       <button class="btn gy bbtn" id="bSetupBack">BACK</button>
@@ -705,7 +708,11 @@ const XP={round:10,win:25,burn:3,lockWin:15,matchWin:40};
 /* GOLD (15 Nov 2026, Billy): everyone starts with 1,000 gold on their own device. Before a match you pick a bet;
    every seat (bots too) puts it in the pot and the match winner takes it (a tie splits it). Online the host picks
    the bet and every friend has to AGREE before the host can start. Quitting a match loses your bet. */
-const BETS=[0,50,100,250,500],GOLD_BROKE=100,GOLD_RESCUE=250;   /* 17 Nov: under 100 gold, Grandma tops you back up to 250 */
+const BETS=[0,50,100,250,500],GOLD_BROKE=100,GOLD_RESCUE=250;
+/* 17 Nov (Billy, laptop): a match is a TABLE with an ENTRY FEE and a PRIZE PURSE, not a bet (App Store age ratings treat
+   betting as simulated gambling). The Gold maths is unchanged: entry = the old bet, purse = the old pot. */
+const TABLES={0:'FREE',50:'COPPER',100:'SILVER',250:'GOLD',500:'ROYAL'};
+const tableShort=b=>TABLES[b]||String(b),tableName=b=>tableShort(b)+' TABLE';   /* 17 Nov: under 100 gold, Grandma tops you back up to 250 */
 function goldIcon(){if(!ICON.gold)ICON.gold=sprite(9,9,P=>{P.e(4.5,4.5,4,4,'#ffc21a');P.r(2,2,3,1,'#fff3a0');P.p(2,3,'#fff3a0');P.r(5,6,3,1,'#d98a00');P.p(7,5,'#d98a00');P.r(4,3,1,3,'#d98a00')});return ICON.gold}
 const goldHTML=n=>`<span class="gchip"><img src="${goldIcon()}" alt="">${Number(n).toLocaleString('en-GB')}</span>`;
 function goldAdd(n){if(G.auto||!n)return;PROF.gold=Math.max(0,PROF.gold+Math.round(n));profSave()}
@@ -717,7 +724,7 @@ function potSeats(pl){const h=pl.filter(p=>!p.ai).length;return h+(pl.some(p=>p.
 function betStart(bet,seats,mid){
   G.betIn=null;if(G.auto||!bet)return;
   goldAdd(-bet);G.betIn={bet,pot:bet*seats,mid:mid||null,paid:false,won:0};
-  setTimeout(()=>{if(G.betIn)pop('POT: '+G.betIn.pot+' GOLD',210,300,'#ffc21a')},900);
+  setTimeout(()=>{if(G.betIn)pop('PURSE: '+G.betIn.pot+' GOLD',210,300,'#ffc21a')},900);
 }
 /* at the end: split the pot between the lowest totals; returns your winnings */
 function betSettle(totals,me){
@@ -728,8 +735,8 @@ function betSettle(totals,me){
 }
 function betLine(final){
   const B=G.betIn;if(!B)return '';
-  if(!final)return `<p class="potline">POT: ${goldHTML(B.pot)}</p>`;
-  return B.won?`<p class="potline">YOU WIN ${goldHTML(B.won)} GOLD!</p>`:`<p class="potline lost">YOU LOST YOUR ${B.bet} GOLD BET.</p>`;
+  if(!final)return `<p class="potline">${tableName(B.bet)} &middot; PURSE ${goldHTML(B.pot)}</p>`;
+  return B.won?`<p class="potline">YOU WIN THE PURSE: ${goldHTML(B.won)} GOLD!</p>`:`<p class="potline lost">BETTER LUCK NEXT TABLE. (ENTRY: ${B.bet} GOLD)</p>`;
 }
 function addXp(n,why){
   if(G.auto||n<=0)return [];
@@ -5452,7 +5459,7 @@ window.COSM=window.COSM||{fronts:[],backs:[],burns:[],pets:[],emotes:[],tableArt
     lock:['KNOCK KNOCK. LOCKOUT!','CURTAIN DOWN!'],peek:['PEEKABOO! HA!'],spy:['I SPY! HEE!','NOSY NOSE. HONK.'],swap:['THE OLD SWITCHEROO!','JUGGLING! SORT OF.'],
     win:['THE FOOL WINS! HA!','WHO IS LAUGHING NOW? ME!'],lose:['STILL FUNNY. HA. HA.','THE KING WILL HEAR OF THIS.'],gotburned:['OW! HA! OW!']}};
   AV_LINES.chef={name:'CHEF GUSTO',say:{
-    draw:['MMM. FRESH.','SMELLS LIKE A SEVEN.','*SNIFF*'],keep:['INTO THE POT!','DELICIOUS. I MEAN, GOOD.'],toss:['NEEDS SALT.','OVERCOOKED.','SEND IT BACK!'],
+    draw:['MMM. FRESH.','SMELLS LIKE A SEVEN.','*SNIFF*'],keep:['INTO THE STEW!','DELICIOUS. I MEAN, GOOD.'],toss:['NEEDS SALT.','OVERCOOKED.','SEND IT BACK!'],
     burn:['FLAMBE!','BURNED! ON PURPOSE!','WELL DONE! VERY WELL DONE!'],steal:['COMPLIMENTS OF THE CHEF.','YOU ORDERED THIS. YOU DID.'],wrong:['I ATE THE EVIDENCE.','WHO MOVED MY SPOON?','IT WAS RAW.'],
     lock:['KITCHEN IS CLOSED!','LAST ORDERS! LOCKOUT!'],peek:['JUST A TASTE.'],spy:['WHAT IS COOKING OVER THERE?','I SMELL A KING.'],swap:['A LITTLE STIR.','TOSS THE SALAD.'],
     win:['CHEF KISS! MWAH!','FIVE STARS. FROM ME.'],lose:['MY SOUFFLE! MY CARDS!','I BLAME THE OVEN.'],gotburned:['IS THAT SMOKE? IS THAT ME?']}};
@@ -7509,7 +7516,7 @@ document.getElementById('theme').addEventListener('click',e=>{
       else if(name==='coins'||name==='coin'){
         const s=A.q('.stack'),c=A.q('.coin');kick(s,'wob');A.sfx('coin');
         if(st.coinAway)return;
-        if(name==='coins'&&one(10)){for(let i=0;i<5;i++)A.spawn(`<img class="px cburst" style="--dx:${-14+i*8}px;animation-delay:${i*60}ms" src="${S.coin}" alt="">`,900);A.pop('JACKPOT',150,440,'#ffc21a');if(!st.gBusy)A.after(600,()=>gobOut(A))}
+        if(name==='coins'&&one(10)){for(let i=0;i<5;i++)A.spawn(`<img class="px cburst" style="--dx:${-14+i*8}px;animation-delay:${i*60}ms" src="${S.coin}" alt="">`,900);A.pop('KA-CHING!',150,440,'#ffc21a');if(!st.gBusy)A.after(600,()=>gobOut(A))}
         else if(one(3)){st.coinAway=1;kick(c,'roll');A.after(3200,()=>coinBack(A))}
         else kick(c,'flip');
       }
@@ -14022,8 +14029,8 @@ function renderTitle(){
   if(PROF.gold<GOLD_BROKE&&!G.auto){const g=GOLD_RESCUE-PROF.gold;PROF.gold=GOLD_RESCUE;profSave();setTimeout(()=>pop('GRANDMA SLIPS YOU '+g+' GOLD',210,420,'#fff3a0'),400)}
   betFit();
   document.getElementById('titleGold').innerHTML=goldHTML(PROF.gold)+' GOLD';
-  document.getElementById('segBet').innerHTML=BETS.map(b=>`<button class="bet ${b===G.bet?'on':''}" data-bet="${b}"${b>PROF.gold?' disabled':''}>${b}</button>`).join('');
-  document.getElementById('setupGold').innerHTML=G.bet?`POT ${goldHTML(G.bet*(G.nOpp+1))} &middot; YOU HAVE ${goldHTML(PROF.gold)}`:`JUST FOR FUN. YOU HAVE ${goldHTML(PROF.gold)}`;
+  document.getElementById('segBet').innerHTML=BETS.map(b=>`<button class="bet ${b===G.bet?'on':''}" data-bet="${b}"${b>PROF.gold?' disabled':''}>${b||'FREE'}</button>`).join('');
+  document.getElementById('setupGold').innerHTML=G.bet?`${tableName(G.bet)}: ENTRY ${G.bet} &middot; BEAT THE BOTS FOR ${goldHTML(G.bet*2)} &middot; YOU HAVE ${goldHTML(PROF.gold)}`:`FREE TABLE. JUST FOR FUN. YOU HAVE ${goldHTML(PROF.gold)}`;
   passCheck(true);
   document.getElementById('titleXp').innerHTML=`<span style="position:absolute;left:6px;top:7px">${avatarHTML(myAvatar(),myHat(),'h',44)}</span><div class="tx"><div class="lv">BATTLE PASS &middot; TIER ${passTier()}/${PASS.tiers}</div>${passBarHTML()}</div>`;
 }
@@ -14316,11 +14323,11 @@ function voteTick(){
   setTimeout(()=>{if(NET.vote===V&&NET.role==='host'){NET.vote=null;startNetMatch()}},VOTE_SHOW_MS);
 }
 function voteHTML(V,me,mine){
-  if(V.result!=null)return `<div class="vote"><div class="vres">${V.result?'THE BET IS '+goldHTML(V.result)+'!':'NO BET. JUST FOR FUN!'}<small>${V.result?'EVERYONE PAYS '+V.result+'. WINNER TAKES '+goldHTML(V.result*(V.seats||1))+'.':'NOBODY WANTED TO RISK IT.'}</small></div></div>`;
+  if(V.result!=null)return `<div class="vote"><div class="vres">${V.result?'THE '+tableName(V.result)+'!':'THE FREE TABLE. JUST FOR FUN!'}<small>${V.result?'ENTRY '+V.result+' EACH. THE WINNER TAKES THE PURSE: '+goldHTML(V.result*(V.seats||1))+'.':'NO ENTRY, NO PURSE.'}</small></div></div>`;
   const c=V.counts||voteCount(V);
-  return `<div class="vote"><h3>PLACE YOUR BETS!</h3><p class="vsub">EVERYONE BETS THE SAME. THE MOST VOTES WINS (A TIE GOES TO THE BIGGER BET).</p>
+  return `<div class="vote"><h3>PICK A TABLE!</h3><p class="vsub">EVERYONE PLAYS AT THE SAME TABLE. THE MOST VOTES WINS (A TIE GOES TO THE BIGGER TABLE).</p>
     <div class="vcd" id="vcd">${Math.max(0,Math.ceil(V.left/1000))}</div>
-    <div class="vbtns">${V.opts.map(o=>`<button class="btn ${o?'y':'gy'}${mine===o?' mine':''}" data-vote="${o}">${o?o:'NONE'}<small>${c[o]||0} VOTE${(c[o]||0)===1?'':'S'}</small></button>`).join('')}</div>
+    <div class="vbtns">${V.opts.map(o=>`<button class="btn ${o?'y':'gy'}${mine===o?' mine':''}" data-vote="${o}">${o?tableShort(o)+' '+o:'FREE'}<small>${c[o]||0} VOTE${(c[o]||0)===1?'':'S'}</small></button>`).join('')}</div>
     <p class="vsub">${V.voted||0} OF ${V.humans||1} HAVE VOTED &middot; YOU HAVE ${goldHTML(PROF.gold)}</p></div>`;
 }
 setInterval(()=>{const el=document.getElementById('vcd');if(!el)return;const V=NET.role==='host'?NET.vote:NET.lastLobby&&NET.lastLobby.vote;if(!V||V.result!=null)return;
@@ -14548,7 +14555,7 @@ function mpDraw(){
       <div class="mplist">${humans.map((h,i)=>`<span>${esc(h)}${i?'':' (YOU)'}</span>`).join('')}${Array.from({length:n-humans.length},()=>'<span class="bot">BOT</span>').join('')}</div>
       <div class="orow"><span>PLAYERS</span><span class="ovol"><button class="btn y" id="mpLess" aria-label="Fewer players">-</button><b style="min-width:24px;text-align:center">${n}</b><button class="btn y" id="mpMore" aria-label="More players">+</button></span></div>
       <div class="orow"><span>ROUNDS</span><span class="ovol">${[3,5,7].map(r=>`<button class="btn ${r===G.rounds?'y':'gy'}" data-mprnd="${r}">${r}</button>`).join('')}</span></div>
-      <p class="onote">WHEN YOU TAP START, EVERYONE VOTES ON THE BET. THE MOST VOTES WINS AND EVERYONE BETS THE SAME.</p>
+      <p class="onote">WHEN YOU TAP START, EVERYONE VOTES ON THE TABLE. THE MOST VOTES WINS AND EVERYONE PAYS THE SAME ENTRY.</p>
       <p class="onote">Empty seats are filled with bots.</p>
       <button class="btn g bbtn" id="mpStart">START</button><button class="btn gy bbtn" id="mpLeave">CLOSE THE ROOM</button>`;
     box.querySelector('#mpLess').onclick=()=>{NET.total=Math.max(humans.length,2,NET.total-1);netLobby();mpDraw()};
@@ -14560,7 +14567,7 @@ function mpDraw(){
     box.querySelector('#mpLeave').onclick=()=>{netLeave(false);mpDraw()};return}
   const L=NET.lastLobby;
   box.innerHTML=`<h2>ROOM ${esc(NET.code)}</h2>${err}${L?`${L.vote?voteHTML({...L.vote,left:(NET.voteEnd||0)-Date.now()},false,NET.myVote&&NET.myVote.id===L.vote.id?NET.myVote.amt:null):''}<div class="mplist">${L.humans.map(h=>`<span>${esc(h.name)}${h.host?' (HOST)':''}</span>`).join('')}${Array.from({length:Math.max(0,L.total-L.humans.length)},()=>'<span class="bot">BOT</span>').join('')}</div>
-    <p style="text-align:center">${L.rounds} ROUNDS. ${L.vote?'':'WAITING FOR THE HOST TO START. YOU WILL ALL VOTE ON THE BET.'}</p>`:'<p style="text-align:center">CONNECTING...</p>'}
+    <p style="text-align:center">${L.rounds} ROUNDS. ${L.vote?'':'WAITING FOR THE HOST TO START. YOU WILL ALL VOTE ON THE TABLE.'}</p>`:'<p style="text-align:center">CONNECTING...</p>'}
     <button class="btn gy bbtn" id="mpLeave">LEAVE</button>`;
   box.querySelectorAll('[data-vote]').forEach(b=>b.onclick=()=>{const V=L&&L.vote;if(!V||V.result!=null)return;NET.myVote={id:V.id,amt:+b.dataset.vote};SFX.flip();netHi();mpDraw()});
   box.querySelector('#mpLeave').onclick=()=>{netLeave(false);mpDraw()};
@@ -14819,7 +14826,7 @@ const WHATS_NEW=[
     ['pass','NEW LOOKS FOR DAILY QUESTS, OPTIONS, MULTIPLAYER, THE MENU AND THE RULE BOOK. HATS FIT EVERY FACE NOW, AND CAPTAIN NOGGIN FOUND HIS HEAD.'],
     ['pass','THE BATTLE PASS HAS TWO TRACKS NOW: FREE AND PREMIUM, SIDE BY SIDE. THE PREMIUM PASS IS COMING SOON, AND EVERY PREMIUM TIER YOU REACH BEFORE THEN UNLOCKS THE MOMENT YOU GET IT. ANYTHING YOU ALREADY WON IS STILL YOURS.'],
     ['snap','TAP YOUR PORTRAIT IN ANY GAME FOR QUICK PHRASES. THE AI TALKS BACK. SOMETIMES RUDELY.'],
-    ['gold','AI PLAYERS ONLY MATCH YOUR BET ONCE NOW, SO BEATING THEM DOUBLES IT. GERT HAS PUT HER PRICES UP. SHE SAYS IT IS THE COST OF HAY.'],
+    ['gold','THE BOTS NOW PUT UP ONE PRIZE BETWEEN THEM, THE SIZE OF YOUR ENTRY. GERT HAS PUT HER PRICES UP. SHE SAYS IT IS THE COST OF HAY.'],
   ]},
   {v:'18nov-wild',title:'LOCKOUT WILD',items:[
     ['lock','A NEW WAY TO PLAY: TAP WILD ON THE MAIN MENU. TWELVE WILD CARDS JOIN THE DECK: BOMB, SHUFFLE, SHIELD, DUMP, X-RAY, REVERSE, FREEZE, LOCKPICK AND THE DREADED OMEGA.'],
@@ -14836,7 +14843,7 @@ const WHATS_NEW=[
     ['lock','NEW TO LOCKOUT? YOUR FIRST TWO MATCHES SHOW LITTLE ARROWS TELLING YOU WHAT TO TAP NEXT.'],
   ]},
   {v:'17nov-b',title:'QUICK PLAY AND RANKED',items:[
-    ['crown','QUICK PLAY: THREE QUICK ROUNDS AGAINST THREE OTHER PLAYERS, NO BETS. RANKED: FIVE ROUNDS AND BETS ALLOWED.'],
+    ['crown','QUICK PLAY: THREE QUICK ROUNDS AGAINST THREE OTHER PLAYERS, ALWAYS THE FREE TABLE. RANKED: FIVE ROUNDS, AND YOU PICK YOUR TABLE.'],
     ['crown','RANKS FROM WOOD TO GRANDMASTER, EACH WITH ITS OWN REWARD TRACK: GOLD, A RANKED TITLE AND A RANKED CARD BACK. YOU NEVER DROP OUT OF A TIER ONCE YOU REACH IT.'],
     ['gold',"GERT'S STALL NOW HAS OVER A HUNDRED THINGS IN SEVEN TABS, AND SIX DEALS A DAY AT A QUARTER OFF. RARE AND LEGENDARY THINGS COST A LOT MORE."],
     ['gold',"GRANDMA'S POCKET MONEY: 100 GOLD ONCE A DAY. DROP BELOW 100 AND SHE TOPS YOU BACK UP TO 250."],
@@ -14865,14 +14872,14 @@ const WHATS_NEW=[
     ['crown','NEW: THE READY STEP. AT THE START OF EVERY ROUND EVERYONE LOOKS AT THEIR BOTTOM TWO CARDS AND TAPS READY. WHEN THE LAST PERSON IS READY, EVERYONE FLIPS THEIR CARDS DOWN AT ONCE. NO MORE PEEKING DURING PLAY.'],
     ['lock','NO MORE HIDING WITH NO CARDS. BURN OR GIVE AWAY YOUR LAST CARD AND YOU DRAW A FINAL CARD, FACE DOWN.'],
   ]},
-  {v:'15nov-b',title:'BETTING, TAKE TWO',items:[
-    ['gold','ONLINE BETS ARE NOW A VOTE. WHEN THE HOST TAPS START, EVERYONE VOTES ON THE BET. THE MOST VOTES WINS (A TIE GOES TO THE BIGGER BET) AND EVERYONE BETS THE SAME. ONLY AMOUNTS EVERYONE CAN AFFORD ARE ON THE TABLE.'],
+  {v:'15nov-b',title:'PICKING A TABLE',items:[
+    ['gold','ONLINE, THE TABLE IS NOW A VOTE. WHEN THE HOST TAPS START, EVERYONE VOTES ON THE TABLE. THE MOST VOTES WINS (A TIE GOES TO THE BIGGER TABLE) AND EVERYONE PAYS THE SAME ENTRY. ONLY AMOUNTS EVERYONE CAN AFFORD ARE ON THE TABLE.'],
     ['pass','THE BATTLE PASS GOT FANCY: RARE, EPIC AND LEGENDARY PRIZES NOW HAVE THEIR OWN FRAMES, AND THE NEXT BIG PRIZE IS SHOWN AT THE TOP. LEGENDARIES SHINE. OBVIOUSLY.'],
   ]},
   {v:'15nov-a',title:'BIG UPDATE!',items:[
     ['tables','SEVEN NEW TABLES. EVERY ROUND IS PLAYED SOMEWHERE SILLIER: THE TAVERN, A PIRATE SHIP, A HAUNTED CRYPT, A DRAGON\'S HOARD, A GIANT CAKE, AN ALIEN MOTHERSHIP AND, FOR THE FINAL ROUND, THE CHICKEN DISCO. POKE THINGS. THINGS POKE BACK.'],
     ['music','EVERY TABLE HAS ITS OWN MUSIC.'],
-    ['gold','GOLD! EVERYONE STARTS WITH 1,000. PICK A BET BEFORE A MATCH: EVERYONE PAYS IN AND THE WINNER TAKES THE POT.'],
+    ['gold','GOLD! EVERYONE STARTS WITH 1,000. PICK A TABLE BEFORE A MATCH: EVERYONE PAYS THE ENTRY AND THE WINNER TAKES THE PRIZE PURSE.'],
     ['pass','THE BATTLE PASS: 30 TIERS OF GOLD, HATS AND NEW FACES, EARNED JUST BY PLAYING.'],
     ['locker','THE LOCKER: PICK YOUR AVATAR, YOUR HAT AND YOUR CARD BACK.'],
     ['chat','CHAT: TALK TO THE TABLE IN ONLINE GAMES. TAP THE SPEECH BUBBLE.'],
@@ -16340,7 +16347,7 @@ function openNews(force){
         return `<div class="cw p${(seed+j*3+i)%5}" style="--w:${w}px;--d:${(.9+j*.09).toFixed(2)}s"><span class="cl">${last?pick(LINES.last,seed+i):pick(LINES.crowd,seed+j*2+i)}</span>${avatarHTML(G.players[i].char,G.players[i].hat,j%2?'a':'s',px)}<span class="cn">${nm(i)}</span><span class="cp">${T[i]}</span></div>`}).join('')+`</div>`}
     const B=G.betIn;
     if(B&&B.pot){h+=B.won?`<div class="pot">YOU WIN ${goldHTML(B.won)} GOLD!</div>`:
-      `<div class="pot lost">${W.length>1?'THEY SPLIT':W.map(nm).join('')+' TAKES'} THE POT: ${goldHTML(B.pot)}</div>`}
+      `<div class="pot lost">${W.length>1?'THEY SPLIT':W.map(nm).join('')+' TAKES'} THE PURSE: ${goldHTML(B.pot)}</div>`}
     /* confetti over first place (more of it when it is you) */
     const R=(()=>{let s=seed*9301+49297;return(a,b)=>{s=(s*9301+49297)%233280;return a+s/233280*(b-a)}})();
     const cols=['#ffc21a','#6fd13c','#ea4a3c','#56a6f0','#fffaf0','#c58cff'],N=youWin?30:16;let c='<div class="cf">';
@@ -17537,7 +17544,7 @@ function openNews(force){
     const Z=G.prize,tot=Z.mine+(Z.bet||0);
     P.querySelectorAll('.step').forEach((st,s)=>{const pl=Z.places.indexOf(s+1);if(pl<0)return;const g=Z.all[pl];if(g)st.insertAdjacentHTML('beforeend',`<span class="q9pg">+${g}</span>`)});
     const pot=P.querySelector('.pot');if(pot)pot.remove();
-    P.insertAdjacentHTML('beforeend',`<div class="q9won${tot?'':' none'}"><span class="l">YOU WON</span><span class="n"><img src="${goldIcon()}" alt=""><b>0</b> GOLD</span>${Z.bet?`<span class="s">${Z.mine} PRIZE + ${Z.bet} FROM THE POT</span>`:''}</div>`);
+    P.insertAdjacentHTML('beforeend',`<div class="q9won${tot?'':' none'}"><span class="l">YOU WON</span><span class="n"><img src="${goldIcon()}" alt=""><b>0</b> GOLD</span>${Z.bet?`<span class="s">${Z.mine} PRIZE + ${Z.bet} FROM THE PURSE</span>`:''}</div>`);
     const b=P.querySelector('.q9won b');let t0=0;const T=1100,go=ts=>{if(!t0)t0=ts;const f=Math.min(1,(ts-t0)/T);b.textContent=Math.round(tot*(1-Math.pow(1-f,3))).toLocaleString('en-GB');if(f<1&&document.getElementById('q5pod'))requestAnimationFrame(go)};
     setTimeout(()=>{if(!REDUCED())requestAnimationFrame(go);else b.textContent=tot.toLocaleString('en-GB');if(tot&&!sfxFile('q9_buy',.5))SFX.extra('coins')},1500);
   }).observe(document.getElementById('stage'),{childList:true,subtree:true});
@@ -18381,7 +18388,7 @@ function openNews(force){
   const badge=(t,d,px)=>`<img class="q12b" src="${RK_BADGE(t,d)}" style="width:${px||24}px" alt="">`;
 
   /* ---------- each tier's reward track ---------- */
-  const RK_TITLES=[['rk_wood','WOODEN SPOON'],['rk_bronze','BRONZE BRAWLER'],['rk_silver','SILVER TONGUE'],['rk_gold','GOLDEN GAMBLER'],
+  const RK_TITLES=[['rk_wood','WOODEN SPOON'],['rk_bronze','BRONZE BRAWLER'],['rk_silver','SILVER TONGUE'],['rk_gold','GOLDEN GOOSE'],
     ['rk_plat','PLATINUM PEEKER'],['rk_diamond','DIAMOND MIND'],['rk_master','MASTER OF LIES'],['rk_gm','GRANDMASTER OF THE TABLE']];
   window.RK_TITLES=RK_TITLES;
   const RKW_TITLES=[['rkw_wood','WILD CHILD'],['rkw_bronze','BOMB SQUAD'],['rkw_silver','SHUFFLE SHARK'],['rkw_gold','SHIELD BEARER'],
@@ -18507,8 +18514,8 @@ function openNews(force){
     const r=rkOf(o.rp);return `<div class="mmseat in" data-i="${i}">${avatarHTML(o.char,o.hat,'n',56)}<b>${o.name}</b><small>${badge(r.t,r.d,16)} ${r.name}</small></div>`}
   window.mmStart=function(mode,bet){
     mmEnsure();audioInit&&audioInit();const ov=document.getElementById('mm'),box=document.getElementById('mmBox');const gen=(MM&&MM.gen||0)+1;
-    MM={mode,bet:bet||0,opps:[null,null,null],gen,t0:Date.now()};const me=rkOf(rkS(!!G.wildMatch).rp);
-    box.innerHTML=`<div class="mmhead">${mode==='ranked'?'RANKED':'QUICK PLAY'}</div><div class="mmsub">${G.wildMatch?'<b class="q16mmw">WILD</b> ':''}${mode==='ranked'?badge(me.t,me.d,20)+' '+me.name+(MM.bet?' &middot; BET '+goldHTML(MM.bet):''):(G.wildMatch?'3 ROUNDS &middot; 12 WILD CARDS':'3 ROUNDS &middot; NO BETS')}</div>
+    MM={mode,bet:bet||0,strict:!!(bet&&window.MM_STRICT),opps:[null,null,null],gen,t0:Date.now()};window.MM_STRICT=false;const me=rkOf(rkS(!!G.wildMatch).rp);
+    box.innerHTML=`<div class="mmhead">${mode==='ranked'?'RANKED':'QUICK PLAY'}</div><div class="mmsub">${G.wildMatch?'<b class="q16mmw">WILD</b> ':''}${mode==='ranked'?badge(me.t,me.d,20)+' '+me.name+(MM.bet?' &middot; '+tableName(MM.bet)+(MM.strict?' ONLY':' OR LOWER'):' &middot; FREE TABLE'):(G.wildMatch?'3 ROUNDS &middot; 16 WILD CARDS':'3 ROUNDS &middot; FREE TABLE')}</div>
       <div class="mmme">${avatarHTML(myAvatar(),myHat(),'h',72)}<b>YOU</b></div>
       <div class="mmspin"><i></i></div><div class="mmline" id="mmLine">${LINES[0]}</div>
       <div class="mmseats" id="mmSeats">${MM.opps.map(seatHTML).join('')}</div><div class="mmtime" id="mmTime">0:00</div>
@@ -18541,25 +18548,29 @@ function openNews(force){
     try{if(NET.role)netLeave(true);NET.role='seek';NET.code='mm'+(mode==='ranked'?'r':'q')+(G.wildMatch?'w':'');NET.name=myName();await netConnect(NET.code)}
     catch(e){if(NET.role==='seek')NET.role=null;aiFill(gen,opps);return}
     if(!MM||MM.gen!==gen){netLeave(true);return}
-    const send=()=>netSend('seek',{t0:MM.t0,name:NET.name,av:myAvatar(),hat:myHat(),rp:rkS(!!G.wildMatch).rp,bet:MM.bet});send();
+    const send=()=>netSend('seek',{t0:MM.t0,name:NET.name,av:myAvatar(),hat:myHat(),rp:rkS(!!G.wildMatch).rp,bet:MM.bet,strict:MM.strict});send();
     const M0=MM;
     M0.seekIv=setInterval(()=>{if(MM!==M0||NET.role!=='seek'){clearInterval(M0.seekIv);return}
       send();realSeats();
-      const alive=[...MM.seen.values()].filter(x=>Date.now()-x.last<3000),el=Date.now()-MM.t0;
-      const group=[{id:NET.id,t0:MM.t0,bet:MM.bet},...alive].sort((a,b)=>a.t0-b.t0||(a.id<b.id?-1:1)),lead=group[0].id===NET.id;
-      if(lead&&alive.length&&(alive.length>=3||el>=MMQ.wait)){clearInterval(M0.seekIv);const mem=group.slice(1,4),code=netCode(),bet=Math.min(MM.bet,...mem.map(x=>x.bet||0));
+      /* 17 Nov: ONLY MY TABLE. Two searchers can share a match unless one ticked it and the other won't pay that much;
+         the match is played at the lowest table in it, so a ticked player always gets their own table or more */
+      const me={id:NET.id,t0:MM.t0,bet:MM.bet,strict:MM.strict},fits=(a,b)=>(!a.strict||(b.bet||0)>=(a.bet||0))&&(!b.strict||(a.bet||0)>=(b.bet||0));
+      const alive=[...MM.seen.values()].filter(x=>Date.now()-x.last<3000&&fits(me,x)),el=Date.now()-MM.t0;
+      const group=[me,...alive].sort((a,b)=>a.t0-b.t0||(a.id<b.id?-1:1)),lead=group[0].id===NET.id;
+      const pick=[];if(lead)for(const c of group.slice(1))if(pick.length<3&&[me,...pick].every(m=>fits(m,c)))pick.push(c);
+      if(lead&&pick.length&&(pick.length>=3||el>=MMQ.wait)){clearInterval(M0.seekIv);const mem=pick,code=netCode(),bet=Math.min(MM.bet,...mem.map(x=>x.bet||0));
         netSend('go',{code,ids:mem.map(x=>x.id),bet});setTimeout(()=>mmHost(gen,code,mem,bet,opps),300);return}
       if((lead&&!alive.length&&el>=MMQ.wait)||(!lead&&el>=MMQ.give)){clearInterval(M0.seekIv);netLeave(true);aiFill(gen,opps)}
     },1000);
   }
   { const no=netOn;netOn=function(m){
       if(NET.role==='seek'){const d=m.d||{};if(!MM)return;
-        if(m.t==='seek'){MM.seen.set(m.from,{id:m.from,t0:+d.t0||Date.now(),name:cleanName(d.name)||'PLAYER',av:d.av,hat:d.hat,rp:+d.rp||0,bet:Number.isInteger(d.bet)?d.bet:0,last:Date.now()});return}
+        if(m.t==='seek'){MM.seen.set(m.from,{id:m.from,t0:+d.t0||Date.now(),name:cleanName(d.name)||'PLAYER',av:d.av,hat:d.hat,rp:+d.rp||0,bet:Number.isInteger(d.bet)?d.bet:0,strict:!!d.strict,last:Date.now()});return}
         if(m.t==='go'&&Array.isArray(d.ids)&&d.ids.includes(NET.id)&&typeof d.code==='string'&&/^[A-Z]{4}$/.test(d.code)){clearInterval(MM.seekIv);mmClient(MM.gen,d.code,Number.isInteger(d.bet)?d.bet:0)}
         return}
       return no.apply(this,arguments)}; }
   async function mmHost(gen,code,mem,bet,opps){if(!MM||MM.gen!==gen)return;const mode=MM.mode;
-    netLeave(true);NET.role='host';NET.code=code;NET.name=myName();NET.total=4;G.rounds=mode==='ranked'?5:3;G.bet=mode==='ranked'?bet:0;
+    netLeave(true);NET.role='host';NET.code=code;NET.name=myName();NET.total=4;G.rounds=mode==='ranked'?5:3;G.bet=mode==='ranked'?bet:0;MM.table=G.bet;
     try{await netConnect(code)}catch(e){NET.role=null;aiFill(gen,opps);return}
     NET.onClose=()=>netReconnect();NET.giveUp=()=>{if(NET.role==='host'){netLeave(true);if(G.inGame)toTitle()}};
     NET.tick=setInterval(()=>{const now=Date.now(),lim=NET.game?60000:12000;for(const [id,r] of NET.roster)if(now-r.seen>lim)netDrop(id);netLobby();if(HOSTNET())netPushNow()},1500);netLobby();
@@ -18577,7 +18588,7 @@ function openNews(force){
     NET.onClose=()=>netReconnect();NET.giveUp=()=>{if(NET.role==='client'){netLeave(true);if(G.inGame)toTitle()}};
     NET.lastHeard=Date.now();netHi();NET.tick=setInterval(()=>{netHi();if(NET.hostId&&!NET.reconnecting&&Date.now()-NET.lastHeard>10000){try{NET.ws.close()}catch(e){}}},3000);
     G.mode=mode;G.rkDone=false;G.prizePaid=false;G.prize=null;
-    const l=document.getElementById('mmLine');if(l)l.textContent='JOINING THE TABLE...';const t=Date.now();
+    const l=document.getElementById('mmLine');if(l)l.textContent=mode==='ranked'&&bet?'JOINING THE '+tableName(bet)+'...':'JOINING THE TABLE...';const t=Date.now();
     const iv=setInterval(()=>{if(!MM||MM.gen!==gen){clearInterval(iv);return}
       const L=NET.lastLobby;if(L&&L.humans)L.humans.filter(h=>h.name!==NET.name).slice(0,3).forEach((h,i)=>{if(!MM.opps[i]||MM.opps[i].name!==h.name)showSeat(i,{name:h.name,char:'you',hat:null,rp:0,real:true})});
       if(NET.game){clearInterval(iv);const box=document.getElementById('mmBox');if(box)box.insertAdjacentHTML('beforeend','<div class="mmbegin">MATCH BEGIN!</div>');sfxFile('q12_begin',.8);
@@ -18585,18 +18596,18 @@ function openNews(force){
       if(Date.now()-t>MMQ.host){clearInterval(iv);netLeave(false);G.mode=null;aiFill(gen,mmOpponents(mode))}},400);
   }
   function mmFound(gen,then){const box=document.getElementById('mmBox');if(!box||!MM)return;box.classList.add('found');
-    const l=document.getElementById('mmLine');if(l)l.textContent='PLAYERS FOUND!';if(!sfxFile('q12_found',.7))SFX.extra('coins');
+    const l=document.getElementById('mmLine');if(l){const tb=MM.table!=null?MM.table:MM.bet;l.textContent='PLAYERS FOUND!'+(MM.mode==='ranked'&&tb?' THE '+tableName(tb)+'!':'')}if(!sfxFile('q12_found',.7))SFX.extra('coins');
     setTimeout(()=>{if(!MM||MM.gen!==gen)return;box.insertAdjacentHTML('beforeend','<div class="mmbegin">MATCH BEGIN!</div>');sfxFile('q12_begin',.8);
       setTimeout(()=>{if(!MM||MM.gen!==gen)return;const M=MM;MM=null;document.getElementById('mm').hidden=true;box.classList.remove('found');
         if(then){then();return}G.mmNext={mode:M.mode,opps:M.opps,bet:M.bet};startMatch()},1300)},1100)}
 
   /* ---------- the ranked panel: your rank, its reward track, a bet, FIND MATCH ---------- */
   function rkEnsure(){if(document.getElementById('rkp'))return;document.getElementById('pass').insertAdjacentHTML('afterend','<div id="rkp" class="ov" hidden><div class="box plate" id="rkpBox" style="width:380px"></div></div>')}
-  let rkBet=0;
+  let rkBet=0,rkStrict=(()=>{try{return localStorage.getItem('lockoutStrict1')==='1'}catch(e){return false}})();
   function rkHTML(){const S=rkS(),r=rkOf(S.rp),pct=r.t>=7?100:r.into;rkBet=Math.min(rkBet,PROF.gold);
     let h=`<h2>RANKED</h2><div class="rksw" role="tablist"><button class="rks${RKV.w?'':' on'}" data-rkw="0" role="tab" aria-selected="${!RKV.w}">STANDARD</button>`+
       `<button class="rks w${RKV.w?' on':''}" data-rkw="1" role="tab" aria-selected="${RKV.w}">WILD</button></div>`+
-      `<p class="rkswd">${RKV.w?'TWELVE WILD CARDS IN THE DECK. ITS OWN LADDER, TITLES AND CARD BACKS.':'PLAIN LOCKOUT. YOUR MEMORY AGAINST THEIRS.'}</p><div class="rkme">${badge(r.t,r.d,56)}<div><div class="rkn">${r.name}</div><div class="rbar"><i style="width:${pct}%"></i></div>
+      `<p class="rkswd">${RKV.w?'SIXTEEN WILD CARDS IN THE DECK. ITS OWN LADDER, TITLES AND CARD BACKS.':'PLAIN LOCKOUT. YOUR MEMORY AGAINST THEIRS.'}</p><div class="rkme">${badge(r.t,r.d,56)}<div><div class="rkn">${r.name}</div><div class="rbar"><i style="width:${pct}%"></i></div>
       <small>${r.t>=7?(S.rp-GM_AT)+' GRANDMASTER POINTS':r.into+' / '+DIV+' RP'} &middot; BEST ${rkOf(S.best||0).name}</small></div></div>
       ${(()=>{const D=RK.byTier[r.t]||RK.delta,sg=x=>x>0?'+'+x:x;return `<p class="q9note">AT ${TIERS[r.t].name}: WIN ${sg(D[0])} RP, SECOND ${sg(D[1])}, THIRD ${D[2]}, LAST ${D[3]}. THE HIGHER YOU CLIMB, THE MORE A BAD GAME COSTS. YOU NEVER DROP OUT OF A TIER ONCE YOU REACH IT.</p>`})()}
       <div class="rkladder">`;
@@ -18604,7 +18615,9 @@ function openNews(force){
       h+=`<div class="rkt${r.t===t?' cur':''}${r.t>t?' done':''}${r.t<t?' lock':''}"><div class="tn">${badge(t,t===7?0:2,28)}<b>${T.name}</b></div><div class="rws">`+
         tr.map(x=>{const got=S.claimed[x.key];const[tt,dd]=x.key.split(':').map(Number);
           return `<span class="rw${got?' got':''}" title="${t===7?'GRANDMASTER':T.name+' '+DIVN[dd]}">${t===7?'GM':DIVN[dd]}<em>${x.gold}G</em>${x.items?'<i>+'+x.items.length+'</i>':''}</span>`}).join('')+`</div></div>`});
-    h+=`</div><div class="rkbet"><span>BET:</span>${BETS.map(b=>`<button class="bet ${b===rkBet?'on':''}" data-rkb="${b}"${b>PROF.gold?' disabled':''}>${b||'NONE'}</button>`).join('')}</div>
+    h+=`</div><div class="rkbet"><span>TABLE:</span>${BETS.map(b=>`<button class="bet ${b===rkBet?'on':''}" data-rkb="${b}"${b>PROF.gold?' disabled':''}>${b||'FREE'}</button>`).join('')}</div>
+      <p class="rktab">${rkBet?`${tableName(rkBet)}: ENTRY ${rkBet} GOLD. THE WINNER TAKES THE PURSE.`:'FREE TABLE: NO ENTRY, JUST RANK POINTS.'}</p>
+      ${rkBet?`<label class="rkonly"><input type="checkbox" id="rkOnly"${rkStrict?' checked':''}> ONLY PLAY AT MY TABLE<small>${rkStrict?'YOU MAY WAIT LONGER. NOBODY THERE? YOU PLAY THE BOTS AT YOUR TABLE.':'OTHERWISE THE MATCH IS AT THE LOWEST TABLE ANYONE IN IT PICKED.'}</small></label>`:''}
       <p class="q9note">YOU HAVE ${goldHTML(PROF.gold)}. WHEN NOT ENOUGH PLAYERS ARE ONLINE, EMPTY SEATS ARE FILLED BY LOCKOUT'S AI PLAYERS.</p>
       <button class="btn g bbtn" id="rkGo">FIND A ${RKV.w?'WILD ':''}MATCH</button><button class="btn gy bbtn" id="rkBack">BACK</button>`;
     return h}
@@ -18612,8 +18625,9 @@ function openNews(force){
     const draw=()=>{box.innerHTML=rkHTML();box.classList.toggle('rkwild',RKV.w);
       box.querySelectorAll('[data-rkw]').forEach(b=>b.onclick=()=>{const w=b.dataset.rkw==='1';if(w===RKV.w)return;RKV.w=w;SFX.flip();draw()});
       box.querySelector('#rkBack').onclick=()=>{SFX.extra('click');ov.hidden=true;RKV.w=PROF.rkLast==='wild';document.getElementById('title').hidden=false;renderTitle()};
-      box.querySelector('#rkGo').onclick=()=>{SFX.extra('click');ov.hidden=true;mmStart('ranked',rkBet,RKV.w?'wild':'standard')};   /* 17 Nov (Billy, laptop q40): straight into the queue on the ladder the switch is on. Was: 17 Nov hotfix (Billy): FIND A MATCH goes through the STANDARD / WILD chooser too, titled RANKED */
+      box.querySelector('#rkGo').onclick=()=>{SFX.extra('click');ov.hidden=true;window.MM_STRICT=rkStrict;mmStart('ranked',rkBet,RKV.w?'wild':'standard')};   /* 17 Nov (Billy, laptop q40): straight into the queue on the ladder the switch is on. Was: 17 Nov hotfix (Billy): FIND A MATCH goes through the STANDARD / WILD chooser too, titled RANKED */
       box.querySelectorAll('[data-rkb]').forEach(b=>b.onclick=()=>{rkBet=+b.dataset.rkb;SFX.flip();draw()});
+      {const o=box.querySelector('#rkOnly');if(o)o.onchange=()=>{rkStrict=o.checked;try{localStorage.setItem('lockoutStrict1',rkStrict?'1':'0')}catch(e){}SFX.flip();draw()}}
       const cur=box.querySelector('.rkt.cur');if(cur&&cur.scrollIntoView)cur.scrollIntoView({block:'nearest'})};
     draw();ov.hidden=false;document.getElementById('title').hidden=true};
 
@@ -21533,7 +21547,7 @@ body.q16pick #table .card.tgt::before{content:"";position:absolute;right:-8px;to
       'WORTH ITS WEIGHT IN STOLEN TURNS.',
       'TOO POLISHED TO BLAME THE WILD CARDS. STILL DOES.',
       'UNBREAKABLE. UNLIKE YOUR LAST HAND.',
-      'TWELVE WILD CARDS AND YOU PLANNED FOR EVERY ONE.',
+      'SIXTEEN WILD CARDS AND YOU PLANNED FOR EVERY ONE.',
       'EVEN THE DECK IS SCARED OF YOU.']};
   window.RK23_LINES=LINES;
   const DIVN=['III','II','I'];
@@ -24629,6 +24643,9 @@ renderTitle();fit();
     ['lock','THE TREASURE CHEST NOW HAS THREE KEYS EACH: EVERY CORRECT SNAP TURNS ONE OF YOURS. FIRST TO THREE TAKES THE GOLD -2.'],
     ['snap',"SLY PEEK REPLACES X-RAY: LOOK AT ONE OF SOMEONE'S CARDS, THEN SWAP IT FOR ONE OF YOURS IF YOU LIKE. THEY NEVER SEE WHAT THEY GOT."],
     ['lock','GOT FORFEITED FOR TOO MANY CARDS? YOU ARE BACK IN THE NEXT ROUND.'],
+    ['gold','PICK YOUR TABLE: FREE, COPPER 50, SILVER 100, GOLD 250 OR ROYAL 500. EVERYONE PAYS THE ENTRY, THE WINNER TAKES THE PURSE.'],
+    ['crown','RANKED: TICK ONLY PLAY AT MY TABLE AND YOU ONLY MEET PLAYERS WHO WILL PAY YOUR ENTRY. NOBODY THERE? THE BOTS PLAY YOU AT IT.'],
+    ['chat',"CHAT: TAP A NAME TO MUTE OR REPORT THEM. DON'T WANT TO SEE BAD LANGUAGE? SWITCH IT OFF IN OPTIONS."],
   ]})}catch(e){}
 })();
 /* ---- q44_callfx.js ---- */
