@@ -23232,23 +23232,24 @@ renderTitle();fit();
   const css=document.createElement('style');css.id='q35css';
   css.textContent=`#gate.acc .logo-big,#gate.acc .glint{display:none!important}
 #gate.acc.out35 .go{display:none}
-.q35{position:absolute;left:58px;top:168px;width:304px;z-index:6;padding:14px 16px 10px;box-sizing:border-box;cursor:default;
- background:#7a4a24;box-shadow:inset 0 0 0 3px #a8703c,inset 0 0 0 5px #4a2a12,0 0 0 3px #1a1030,0 6px 0 3px rgba(0,0,0,.35);
+.q35{position:absolute;left:12px;top:182px;width:396px;height:168px;z-index:6;padding:10px 22px 0;box-sizing:border-box;cursor:default;
+ background:#7a4a24;box-shadow:inset 0 0 0 3px #a8703c,inset 0 0 0 5px #4a2a12,inset 0 -4px 0 5px rgba(0,0,0,.25);
  background-image:repeating-linear-gradient(0deg,transparent 0 13px,rgba(0,0,0,.14) 13px 14px);text-align:center;font-family:var(--pix)}
 .q35::before,.q35::after{content:'';position:absolute;top:7px;width:6px;height:6px;background:#c9cede;box-shadow:0 0 0 2px #1a1030}
 .q35::before{left:8px}.q35::after{right:8px}
-.q35 h3{margin:0 0 9px;font-size:13px;letter-spacing:1px;color:#fff3a0;text-shadow:2px 2px 0 #1a1030}
-.q35 input[type=email],.q35 input[type=password]{display:block;width:100%;box-sizing:border-box;margin:0 0 8px;padding:7px 9px;border:0;border-radius:0;
+.q35 h3{margin:0 0 6px;height:16px;font-size:12px;line-height:16px;letter-spacing:1px;color:#fff3a0;text-shadow:2px 2px 0 #1a1030;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.q35 h3.bad{color:#ffb0a0}
+.q35 input[type=email],.q35 input[type=password]{display:block;width:100%;box-sizing:border-box;margin:0 0 6px;height:30px;padding:4px 9px;border:0;border-radius:0;
  font:16px var(--pix);color:#fffaf0;background:#1a1030;box-shadow:inset 0 0 0 2px #4a2a12,inset 3px 3px 0 #0e0820;outline:none;-webkit-appearance:none;appearance:none;-webkit-user-select:text;user-select:text}
 .q35 input::placeholder{color:#7a68b8}
 .q35 input:focus{box-shadow:inset 0 0 0 2px #ffc21a,inset 3px 3px 0 #0e0820}
-.q35 .q35b{display:flex;gap:8px;margin-top:2px}
-.q35 .q35b .btn{position:static!important;left:auto!important;top:auto!important;width:auto!important;margin:0!important;flex:1;font-size:12px;padding:8px 0;min-height:34px}
-.q35 .q35r{display:inline-flex;align-items:center;gap:6px;margin:9px 0 0;font-size:9px;color:#f2dcb8;cursor:pointer;-webkit-user-select:none;user-select:none}
+.q35 .q35b{display:flex;gap:8px;margin-top:1px}
+.q35 .q35b .btn{position:static!important;left:auto!important;top:auto!important;width:auto!important;margin:0!important;flex:1;font-size:12px;padding:6px 0;min-height:30px}
+.q35 .q35r{display:inline-flex;align-items:center;gap:6px;margin:7px 0 0;font-size:9px;color:#f2dcb8;cursor:pointer;-webkit-user-select:none;user-select:none}
 .q35 .q35r input{width:14px;height:14px;margin:0;accent-color:#6fd13c}
-.q35 .q35m{min-height:12px;margin:7px 0 0;font-size:9px;line-height:1.35;color:#fff3a0}
+.q35 .q35m{min-height:12px;margin:6px 0 0;font-size:9px;line-height:1.35;color:#fff3a0}
 .q35 .q35m.bad{color:#ffb0a0}
-.q35 .q35w{font-size:11px;color:#fffaf0;margin:2px 0 8px;word-break:break-all}
+.q35 .q35w{font-size:12px;color:#fffaf0;margin:16px 0 10px;word-break:break-all}
 .q35 .q35o{background:none;border:0;padding:4px;font:9px var(--pix);color:#f2dcb8;text-decoration:underline;cursor:pointer}
 .q35g{position:absolute;left:0;right:0;top:590px;z-index:6;text-align:center}
 .q35g button{background:none;border:0;font:10px var(--pix);color:#c9b8f0;text-decoration:underline;cursor:pointer;padding:6px}
@@ -23259,12 +23260,11 @@ renderTitle();fit();
   function boardHTML(){
     if(A)return `<h3>WELCOME BACK</h3><div class="q35w">${esc(A.email||'')}</div><div class="q35m">YOUR PROGRESS IS SAVED TO YOUR ACCOUNT.</div><button class="q35o" data-q35="out">NOT YOU? LOG OUT</button>`;
     let remember=true;try{remember=localStorage.getItem('lockoutAccRem')!=='0'}catch(e){}
-    return `<h3>SIGN IN TO KEEP YOUR PROGRESS</h3>
+    return `<h3 id="q35m">SIGN IN TO KEEP YOUR PROGRESS</h3>
       <input type="email" id="q35e" placeholder="EMAIL" autocomplete="email" autocapitalize="off" autocorrect="off" spellcheck="false" inputmode="email">
       <input type="password" id="q35p" placeholder="PASSWORD" autocomplete="current-password">
       <div class="q35b"><button class="btn g" data-q35="in">LOG IN</button><button class="btn y" data-q35="up">SIGN UP</button></div>
-      <label class="q35r"><input type="checkbox" id="q35k"${remember?' checked':''}>REMEMBER ME</label>
-      <div class="q35m" id="q35m"></div>`}
+      <label class="q35r"><input type="checkbox" id="q35k"${remember?' checked':''}>REMEMBER ME</label>`}
   let busy=false;
   function say(t,bad){const m=$('q35m');if(m){m.textContent=t;m.classList.toggle('bad',!!bad)}}
   function shake(){const b=document.querySelector('.q35');if(!b)return;b.classList.remove('shake');void b.offsetWidth;b.classList.add('shake')}
