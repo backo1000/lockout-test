@@ -15494,6 +15494,8 @@ function openNews(force){
       const d=$('fx').lastElementChild;
       if(d&&d.classList.contains('slam')){d.classList.add('q-lock');const tt=d.querySelector('.t');if(tt)tt.insertAdjacentHTML('afterbegin',`<img src="${ICON.lock}" alt="">`)}
       if(quiet())return;
+      /* 17 Nov (Billy, laptop): the bars are the LOCKOUT for anyone with no call bought; a call (q42) replaces them, banner kept */
+      if(window.__lcAt&&performance.now()-window.__lcAt<1500)return;
       snd('q_gate',.7);
       const g=fxAdd('<div class="q-gate"></div>',1750);
       setTimeout(()=>{kick(9,420);flash('#ea4a3c',.22);
@@ -24482,8 +24484,10 @@ renderTitle();fit();
   const byId=id=>id?L().find(c=>c.id===id)||null:null;
   const mid=pi=>{try{const S=SEATS[P(pi).seat];return {x:S.port.x+S.ps/2,y:S.port.y+S.ps/2}}catch(e){return {x:210,y:410}}};
   function play(id,pi,mine){const c=byId(id);if(!c||typeof c.play!=='function')return false;
+    window.__lcAt=performance.now();
+    try{document.querySelectorAll('#fx .q-gate').forEach(e=>e.remove())}catch(e){}   /* 17 Nov: a call replaces the bars */
     try{const m=mid(pi);c.play(m.x,m.y,{mine:!!mine,name:(P(pi)&&(P(pi).nname||P(pi).name))||''})}catch(e){return false}
-    try{if(c.sfx)sfxFile(c.sfx,.7)}catch(e){}
+    try{let ok=false;if(c.sfx)ok=sfxFile(c.sfx,.7);if(!ok)sfxFile('q_gate',.7)}catch(e){}   /* the bars' clang until the call's sound is made */
     return true}
   const mineId=()=>{try{return typeof cosOn==='function'?cosOn('call'):null}catch(e){return null}};
   /* friends online: their call rides on 'hi', like their card back */
