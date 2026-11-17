@@ -304,6 +304,8 @@ table.sc tbody tr:nth-child(odd){background:rgba(255,255,255,.05)}
 .ovol:has([data-mpbet]){gap:5px}
 #titleGold{position:absolute;left:60px;right:60px;top:732px;height:30px;display:flex;align-items:center;justify-content:center;font-size:14px}
 #setupGold{text-align:center;font-size:11px;margin:-6px 0 12px}
+.q46cpic img{width:30px!important;height:20px!important;image-rendering:pixelated}
+.q46cp{color:#7fd6cf!important}.q46cpc img{width:18px;height:12px}
 .rktab{text-align:center;font-size:10px;color:var(--goldl);margin:4px 0 2px}
 .rkonly{display:block;text-align:center;font-size:11px;font-weight:700;color:var(--cardl);margin:4px 0 6px;cursor:pointer}
 .rkonly input{vertical-align:-2px;margin-right:4px}.rkonly small{display:block;font-size:9px;font-weight:400;color:#b8b0d8;margin-top:2px}
@@ -5479,6 +5481,132 @@ window.COSM=window.COSM||{fronts:[],backs:[],burns:[],pets:[],emotes:[],tableArt
     lock:['SHUT THE DOOR! DRAUGHT!','L-L-LOCKOUT!'],peek:['A CHILLY LITTLE LOOK.'],spy:['COLD HARD STARE.','WHAT HAVE YOU G-G-GOT?'],swap:['ICE TO SEE THESE MOVE.','S-S-SWAPSIES.'],
     win:['ICE COLD. STILL COLD. BUT WON!','A WARM FEELING. FINALLY.'],lose:['LEFT OUT IN THE COLD.','AVALANCHE OF BAD LUCK.'],gotburned:['AAH! OOH. ACTUALLY, NICE.']}};
 })();
+/* ---- q46_premium_backs.js ---- */
+/* =========================================================================
+   Q46: EIGHT PREMIUM CARD BACKS (17 Nov 2026, Billy, laptop, Opus; Fable to polish). They replace Gold bags on the
+   premium pass (Q19), with four premium titles (in-place in q9's TITLES). src 'premium': never in Gert's Stall, never on
+   the free track. Pasted BEFORE q9 (which turns COSM.backs into BACKS at load). 18 x 26, like every back.
+   ========================================================================= */
+(function(){
+  window.COSM=window.COSM||{fronts:[],backs:[],burns:[],pets:[],emotes:[],tableArt:{}};
+  const W='#fffaf0',G='#ffc21a',GL='#fff3a0',GD='#d98a00',GK='#a86a00',RED='#ea4a3c',REDD='#a82a2a',K='#1a1030';
+  const rim=(P,i,c,d,l)=>{const w=18-2*i,h=26-2*i;P.r(i,i,w,1,c);P.r(i,i,1,h,c);P.r(i,25-i,w,1,d);P.r(17-i,i,1,h,d);if(l){P.r(i,i,5,1,l);P.r(i,i,1,5,l)}};
+  const twk=(P,x,y,c,a)=>{P.p(x,y,c);[[1,0],[-1,0],[0,1],[0,-1]].forEach(([i,j])=>P.p(x+i,y+j,a||c))};
+  const add=b=>{if(!COSM.backs.some(x=>x.id===b.id))COSM.backs.push(Object.assign({src:'premium'},b))};
+
+  /* RARE: NIGHT SHIFT. The moon in a nightcap, clocked off. */
+  add({id:'pm_moon',name:'NIGHT SHIFT',rarity:'rare',draw:P=>{
+    for(let y=0;y<26;y++)P.r(0,y,18,1,y<9?'#141032':y<17?'#1c1848':'#26205a');
+    [[3,4],[14,3],[15,19],[2,17],[5,22],[12,23]].forEach(([x,y],i)=>i%2?P.p(x,y,'#bfe6ff'):twk(P,x,y,'#ffffff','#5a6aa8'));
+    P.e(8.5,13,5.2,5.2,GL);P.e(11,11.5,4.4,4.4,'#1c1848');P.shade(GL,'#e8c860',(x,y)=>y>=16);
+    P.r(4,12,2,1,K);P.p(3,13,K);                                  // a shut eye
+    P.p(6,15,'#ffb89a');
+    P.map(3,5,['....r','...rrw','..rrrr','.rrrrr','rrrrrr'],{r:RED,w:W});P.p(2,9,W);P.p(1,10,W);   // the nightcap and its bobble
+    P.p(13,6,'#bfe6ff');P.r(14,5,2,1,'#bfe6ff');P.p(15,6,'#bfe6ff');P.r(14,7,2,1,'#bfe6ff');        // a little z
+    rim(P,0,'#56a6f0','#2a5fa8','#bfe6ff');
+  }});
+
+  /* RARE: ONE WAY TICKET. Nobody packed a return booster. */
+  add({id:'pm_rocket',name:'ONE WAY TICKET',rarity:'rare',draw:P=>{
+    P.r(0,0,18,26,'#5ac8e0');P.r(0,0,18,3,'#9ae4f2');
+    P.e(3,19,3,1.6,W);P.e(15,6,2.6,1.3,W);P.e(14,22,3.4,1.6,W);
+    P.r(7,6,4,11,'#e8e8f0');P.r(10,6,1,11,'#b8b8c8');P.r(7,6,1,11,'#ffffff');                     // the body
+    P.r(8,3,2,3,RED);P.p(8,2,RED);P.r(7,5,4,1,RED);P.p(9,2,REDD);P.r(10,4,1,2,REDD);            // the nose
+    P.e(8.8,9.5,1.4,1.4,'#2a5fa8');P.p(8,9,'#bfe6ff');                                          // the window (someone is waving)
+    P.r(5,13,2,4,RED);P.r(11,13,2,4,REDD);P.r(6,12,1,1,RED);P.r(11,12,1,1,REDD);                 // fins
+    P.r(8,17,2,1,'#77779a');
+    P.r(7,18,4,2,'#ff8a1a');P.r(8,20,2,2,G);P.p(8,22,GL);P.p(9,23,GL);P.r(8,18,2,1,GL);          // the flame
+    rim(P,0,W,'#2a8aa0');
+  }});
+
+  /* EPIC: HEAVY IS THE HEAD. The crown, having a lie down. */
+  add({id:'pm_crown',name:'HEAVY IS THE HEAD',rarity:'epic',draw:P=>{
+    P.r(0,0,18,26,'#4a1a6a');
+    for(let y=2;y<24;y++)for(let x=2;x<16;x++)if((x+y)%4===0&&(x-y+40)%4===0)P.p(x,y,'#6a2a8e');
+    P.e(9,17,6.5,3,'#c03030');P.e(9,16.4,6,2.2,'#e04040');P.r(4,15,4,1,'#ff7a6a');                // the cushion
+    [[2,17],[15,17]].forEach(([x,y])=>{P.p(x,y,G);P.p(x,y+1,GD)});                               // tassels
+    P.r(5,11,9,4,G);P.r(5,11,9,1,GL);P.r(12,11,2,4,GD);P.r(5,14,9,1,GD);                          // the band
+    [5,9,13].forEach(x=>{P.r(x,8,1,3,G);P.p(x,7,GL);P.p(x,6,RED)});P.r(7,9,1,2,G);P.r(11,9,1,2,G);// points and pearls
+    P.p(7,12,RED);P.p(9,12,'#56a6f0');P.p(11,12,'#6fd13c');P.p(7,13,REDD);P.p(11,13,'#3fa34d');
+    P.r(7,15,5,1,'#a82a2a');                                                                     // the dent it made
+    twk(P,3,4,'#ffffff',GL);twk(P,15,22,'#ffffff',GL);
+    rim(P,0,G,GD,GL);rim(P,1,'#7a3a9a','#2a0a3a');
+  }});
+
+  /* EPIC: EIGHT HANDS, NO PATIENCE. Plays four hands at once. Loses all four. */
+  add({id:'pm_octo',name:'EIGHT HANDS, NO PATIENCE',rarity:'epic',draw:P=>{
+    P.r(0,0,18,26,'#0e4a6a');for(let y=0;y<26;y+=3)P.r((y*5)%14,y,4,1,'#16608a');
+    [[3,3],[14,5],[4,21]].forEach(([x,y])=>{P.p(x,y,'#9ae4f2');P.p(x+1,y-1,'#9ae4f2')});
+    const O='#c04ab0',OD='#8a2a80',OL='#e88ad8';
+    P.e(9,9,4.5,4.2,O);P.r(6,6,3,1,OL);P.shade(O,OD,(x,y)=>x>=12);
+    [[4,13],[6,14],[8,14],[10,14],[12,13]].forEach(([x,y],i)=>{P.r(x,y,1,5,i%2?OD:O);P.p(x+(i<2?-1:i>2?1:0),y+5,O)});
+    P.r(7,8,2,2,W);P.r(10,8,2,2,W);P.p(8,9,K);P.p(10,9,K);P.r(8,11,3,1,OD);                       // eyes (one on each hand)
+    [[1,16],[14,15],[6,20],[11,20]].forEach(([x,y],i)=>{P.r(x,y,3,4,W);P.r(x,y+3,3,1,'#d9d2c4');P.p(x+1,y+1,i%2?K:RED)});
+    rim(P,0,'#56a6f0','#0a2a4a');
+  }});
+
+  /* EPIC: KNOCKED IT OFF THE TABLE. He was looking at you the whole time. */
+  add({id:'pm_cat',name:'KNOCKED IT OFF THE TABLE',rarity:'epic',draw:P=>{
+    P.r(0,0,18,26,'#f2d8a8');P.r(0,0,18,1,'#fff0d0');
+    P.r(0,15,18,3,'#8b5a2b');P.r(0,15,18,1,'#b07a42');P.r(0,18,18,1,'#5e3a1a');P.r(2,19,2,7,'#7a4a22');P.r(14,19,2,7,'#7a4a22');
+    const C='#2a2235',CL='#4a3a5a';
+    P.e(7,11.5,4.2,3.4,C);P.r(4,6,5,4,C);P.p(4,5,C);P.p(8,5,C);P.p(4,6,'#ff8ab0');P.p(8,6,'#ff8ab0');   // body and head
+    P.r(5,8,1,1,'#9ae86a');P.r(7,8,1,1,'#9ae86a');P.p(6,9,'#ff8ab0');                            // the stare
+    P.r(5,13,4,2,W);P.r(11,10,4,1,C);P.p(15,9,W);P.p(14,10,W);                                   // white chest, the paw out
+    P.r(1,12,2,1,C);P.p(0,11,C);P.p(3,11,CL);                                                     // the tail
+    P.r(13,20,3,4,W);P.p(14,21,RED);P.p(14,22,RED);P.r(13,23,3,1,'#d9d2c4');                      // the card, falling
+    [[12,19],[16,19],[12,24]].forEach(([x,y])=>P.p(x,y,'#a87a4a'));
+    rim(P,0,W,'#b0906a');
+  }});
+
+  /* LEGENDARY: PIN IS 0000. The bank never changed it. */
+  add({id:'pm_vault',name:'PIN IS 0000',rarity:'legendary',shine:1,draw:P=>{
+    P.r(0,0,18,26,'#2a2235');
+    for(let y=3;y<23;y+=2)P.r(3,y,12,1,'#332a42');
+    P.e(9,12,6.3,6.3,'#9a9ab0');P.e(9,12,5.2,5.2,'#c9c9d8');P.e(9,12,3.1,3.1,'#77779a');P.e(9,12,2.1,2.1,'#e6e6f0');
+    P.shade('#c9c9d8','#9a9ab0',(x,y)=>x+y>=23);
+    [[9,5],[9,19],[2,12],[16,12]].forEach(([x,y])=>P.p(x,y,'#5a5a78'));                          // bolts
+    P.r(8,11,3,1,K);P.p(9,10,K);                                                                 // the dial
+    P.map(2,19,['.gg.gg.','ggggggg','gGGgGGg'],{g:G,G:GD});P.map(10,20,['gg.gg','ggggg'],{g:G});    // what leaked out
+    P.r(4,22,10,1,GK);
+    twk(P,3,4,'#ffffff',GL);twk(P,15,7,'#ffffff',GL);twk(P,14,22,'#ffffff',GL);
+    rim(P,0,G,GD,GL);rim(P,1,'#7a4a00','#3a2200');rim(P,2,GD,GK,G);
+  }});
+
+  /* LEGENDARY: HOARD ENOUGH. He is not asleep. Do not touch the coins. */
+  add({id:'pm_dragon',name:'HOARD ENOUGH',rarity:'legendary',shine:1,draw:P=>{
+    P.r(0,0,18,26,'#1a2a1e');for(let y=0;y<26;y+=4)for(let x=(y/4)%2*2;x<18;x+=4)P.p(x,y,'#22382a');
+    P.e(9,20.5,7,3.5,G);P.shade(G,GD,(x,y)=>y>=22);P.map(3,17,['.g..g...g.g.','gGg.gGg.gGgG'],{g:GL,G:G});       // the hoard
+    const D='#3fa34d',DD='#2c7a3a',DL='#6fd13c';
+    P.e(9,14,5.5,3.5,D);P.shade(D,DD,(x,y)=>y>=16);P.r(5,12,5,1,DL);                             // curled body
+    P.r(12,9,4,3,D);P.r(15,10,2,2,D);P.r(12,9,3,1,DL);P.p(16,11,DD);P.p(15,12,'#9a5a2a');           // the head on its paws
+    P.r(13,10,2,1,K);P.p(13,11,'#ff8a1a');                                                       // one eye, nearly shut. Nearly.
+    P.p(12,8,DD);P.p(14,8,DD);                                                                    // horns
+    P.r(2,13,2,1,D);P.r(1,12,1,1,D);P.p(0,11,DL);                                                 // the tail tip
+    [[6,11],[8,10],[10,11]].forEach(([x,y])=>P.p(x,y,DD));                                        // ridges
+    P.p(17,9,'#bfbfcf');P.p(16,8,'#bfbfcf');                                                      // smoke
+    twk(P,3,4,'#ffffff',GL);twk(P,14,4,'#ffffff',GL);
+    rim(P,0,G,GD,GL);rim(P,1,'#2c4a30','#0a1a0e');
+  }});
+
+  /* LEGENDARY: BURNT TOAST RISING. Every morning it burns. Every morning it rises again. */
+  add({id:'pm_phoenix',name:'BURNT TOAST RISING',rarity:'legendary',shine:1,draw:P=>{
+    for(let y=0;y<26;y++)P.r(0,y,18,1,y<8?'#3a0a1a':y<16?'#5a1218':'#7a1a10');
+    const F1='#ff8a1a',F2=G,F3=GL;
+    P.map(1,7,['f.......','ff......','fff.....','.fff....','.ffff...','..ffff..','...fffff'],{f:F1});        // left wing
+    P.map(10,7,['.......f','......ff','.....fff','....fff.','...ffff.','..ffff..','fffff...'],{f:F1});        // right wing
+    P.map(2,9,['y.....','yy....','.yy...','..yyy.'],{y:F2});P.map(12,9,['.....y','....yy','...yy.','.yyy..'],{y:F2});
+    P.r(6,9,6,7,'#c98a4a');P.r(5,10,8,5,'#c98a4a');P.r(6,9,6,1,'#e0a860');P.r(5,10,1,4,'#e0a860');    // the toast
+    P.r(7,11,4,3,'#5a3a22');P.p(8,12,'#3a2210');P.p(10,11,'#3a2210');                              // the burnt bit
+    P.r(6,16,1,1,'#8a5222');P.r(11,16,1,1,'#8a5222');
+    P.p(7,10,K);P.p(10,10,K);P.r(8,14,2,1,K);                                                    // a brave face
+    P.map(6,17,['.f.ff.','fyfyyf','.yfy..','..y...'],{f:F1,y:F2});P.p(8,21,F3);P.p(9,22,F3);        // the tail of fire
+    P.p(8,7,F2);P.p(9,6,F3);P.p(8,5,F2);P.p(10,7,F2);                                            // a crest
+    twk(P,3,3,'#ffffff',F3);twk(P,15,21,'#ffffff',F3);
+    rim(P,0,G,GD,GL);rim(P,1,'#7a1a10','#2a0608');
+  }});
+})();
+
 /* ---- extras/av_premium.js ---- */
 /* PREMIUM PASS AVATARS (17 Nov 2026): eight avatars for the paid battle pass, four epic and four legendary, every one
    with its own animated background. Same 32 x 32 grid, five moods, lit top-left, as the cast. Headgear is kept inside
@@ -14719,8 +14847,14 @@ function itemThumb(it){
   if(it.k==='back')return `<span class="pth back" style="background-image:url(${ICON.backs[it.i]})"></span>`;
   if(it.k==='hat')return `<span class="pth">${avatarHTML(myAvatar(),it.id,'h',44)}</span>`;
   if(it.k==='av')return `<span class="pth">${avatarHTML(it.id,null,'h',44)}</span>`;
+  if(it.k==='bag'&&it.cp)return `<span class="pth bag q46cpic"><img src="${couponIcon()}" alt="Stall coupons"></span>`;
   return `<span class="pth bag"><img src="${goldIcon()}" alt=""><img src="${goldIcon()}" alt=""><img src="${goldIcon()}" alt=""></span>`;
 }
+/* 17 Nov (laptop q46): a Stall Coupon, Gert's own ticket: spends like Gold in her stall, nowhere else */
+function couponIcon(){if(!ICON.coupon)ICON.coupon=sprite(15,10,P=>{P.r(1,1,13,8,'#7fd6cf');P.r(1,1,13,1,'#c8f2ee');P.r(13,2,1,7,'#3fa8a0');P.r(1,8,13,1,'#3fa8a0');
+  P.p(1,4,null);P.p(13,4,null);P.p(1,5,null);P.p(13,5,null);for(let y=2;y<8;y+=2)P.p(10,y,'#2a7a74');
+  P.r(3,3,5,4,'#ffc21a');P.r(3,3,5,1,'#fff3a0');P.p(5,4,'#a86a00');P.p(5,5,'#a86a00');P.p(4,5,'#d98a00')});return ICON.coupon}
+const couponHTML=n=>`<span class="gchip q46cpc"><img src="${couponIcon()}" alt="">${Number(n).toLocaleString('en-GB')}</span>`;
 /* how special a reward is: hats carry their own; the avatars, backs and bags by where they sit */
 const AV_RARITY=['rare','epic','epic','legendary'];
 function itemRarity(it){
@@ -17348,6 +17482,8 @@ function openNews(force){
     ['cheat','THE CHEAT (ALLEGEDLY)','epic','pass'],['memory','THE MEMORY MACHINE','epic','pass'],['lord','LORD OF LOCKOUT','legendary','pass'],
     ['spender','BIG SPENDER','common','shop'],['discount','DISCOUNT ROYALTY','rare','shop'],['regular',"GERT'S BEST CUSTOMER",'epic','shop'],
     ['stallking','KING OF THE STALL','legendary','shop'],
+    ['patron','PATRON OF THE TAVERN','rare','premium'],['velvet','VELVET ROPE','epic','premium'],['gilded','THE GILDED ONE','epic','premium'],
+    ['legend1','SEASON ONE LEGEND','legendary','premium'],   /* 17 Nov (laptop q46): premium-pass titles */
     ['coupon','COUPON CLIPPER','common','shop'],['window','WINDOW SHOPPER','common','shop'],['loose','LOOSE CHANGE','common','shop'],
     ['receipt','KEEPER OF RECEIPTS','common','shop'],['haggler','THE HAGGLER','rare','shop'],['tycoon','TINY TYCOON','rare','shop'],
     ['wallet','WALLET OF STEEL','rare','shop'],['moneybags','MONEYBAGS','epic','shop'],['loaded','ABSOLUTELY LOADED','epic','shop'],
@@ -17583,14 +17719,14 @@ function openNews(force){
   function stallHTML(){stallStock();const RK={common:0,rare:1,epic:2,legendary:3};
     const S=stallTab==='deals'?stallStock():cosItems(stallTab).filter(x=>x.src==='shop').sort((a,b)=>(RK[a.rarity]||0)-(RK[b.rarity]||0)).map(x=>({k:stallTab,id:x.id})),say=GERT_SAYS[Math.floor(Date.now()/86400000)%GERT_SAYS.length];
     let h=`<h2>GERT'S STALL</h2><div class="q9gert">${avatarHTML('gert',null,'h',64)}<div class="q9say">${say}</div></div>
-      <div class="q9top"><span>${goldHTML(PROF.gold)} GOLD</span><span class="q9new">${stallTab==='deals'?'NEW DEALS IN '+untilMidnight():S.filter(x=>cosOwned(x.k,x.id)).length+' / '+S.length+' OWNED'}</span></div>
+      <div class="q9top"><span>${goldHTML(PROF.gold)} GOLD${PROF.coupons?' + '+couponHTML(PROF.coupons)+' COUPONS':''}</span><span class="q9new">${stallTab==='deals'?'NEW DEALS IN '+untilMidnight():S.filter(x=>cosOwned(x.k,x.id)).length+' / '+S.length+' OWNED'}</span></div>
       <div class="lktabs q9tabs q9stabs">${STALL_TABS.map(([k,n])=>`<button class="btn ${stallTab===k?'y':'gy'}" data-st9="${k}">${n}</button>`).join('')}</div>
       ${stallTab==='deals'?`<p class="q9note">SIX THINGS A DAY AT A QUARTER OFF. EVERYTHING ELSE IS IN THE TABS ABOVE.</p>`:''}<div class="q9grid">`;
     if(!S.length)h+=`<p class="q9note">${stallTab==='deals'?'SOLD OUT. GERT IS AT THE MARKET. COME BACK TOMORROW.':'NOTHING HERE YET. GERT IS ON IT.'}</p>`;
     S.forEach(x=>{const it=cosFind(x.k,x.id),pr=priceOf(x.k,x.id),deal=isDeal(x.k,x.id)&&pr<(PRICE[it.rarity]||500),own=cosOwned(x.k,x.id),on=cosOn(x.k)===x.id||(x.k==='emote'&&own);
       h+=`<div class="q9item r-${it.rarity}${own?' own':''}"><span class="q9kind">${deal&&!own?'<b class="q9off">25% OFF</b> ':''}${KIND_ONE[x.k]}</span><span class="q9pic">${stallThumb(x.k,x.id)}</span><b>${it.name}</b><i class="rar">${RAR_NAME[it.rarity]}</i>
         ${own?(on?`<button class="btn gy" disabled>${x.k==='emote'?'YOURS':'ON'}</button>`:`<button class="btn g" data-wear="${x.k}:${x.id}">USE IT</button>`)
-        :`<button class="btn y${PROF.gold<pr?' poor':''}" data-buy="${x.k}:${x.id}">${goldHTML(pr)}</button>`}</div>`});
+        :`<button class="btn y${PROF.gold+(PROF.coupons||0)<pr?' poor':''}" data-buy="${x.k}:${x.id}">${goldHTML(pr)}</button>`}</div>`});
     return h+`</div><button class="btn y bbtn" id="bStallLocker">LOCKER</button><button class="btn gy bbtn" id="bStallClose">BACK</button>`;
   }
   function ensureStall(){if(document.getElementById('stall'))return;const pass=document.getElementById('pass');
@@ -17602,8 +17738,8 @@ function openNews(force){
       box.querySelector('#bStallLocker').onclick=()=>{SFX.extra('click');ov.hidden=true;openLocker()};
       box.querySelectorAll('[data-st9]').forEach(b=>b.onclick=()=>{stallTab=b.dataset.st9;SFX.flip();draw();box.scrollTop=0});
       box.querySelectorAll('[data-buy]').forEach(b=>b.onclick=()=>{const [k,id]=b.dataset.buy.split(':'),pr=priceOf(k,id);
-        if(PROF.gold<pr){SFX.buzz();pop('NOT ENOUGH GOLD',210,300,'#ea4a3c');return}
-        PROF.gold-=pr;(PROF.own[k]=PROF.own[k]||{})[id]=1;profSave();PASS.list=null;
+        const cp=PROF.coupons||0;if(PROF.gold+cp<pr){SFX.buzz();pop('NOT ENOUGH GOLD',210,300,'#ea4a3c');return}
+        const useC=Math.min(cp,pr);PROF.coupons=cp-useC;PROF.gold-=pr-useC;   /* 17 Nov: Stall Coupons first, then Gold */(PROF.own[k]=PROF.own[k]||{})[id]=1;profSave();PASS.list=null;
         if(!sfxFile('q9_buy',.7))SFX.extra('coins');pop('SOLD!',210,300,'#ffc21a');draw()});
       box.querySelectorAll('[data-wear]').forEach(b=>b.onclick=()=>{const [k,id]=b.dataset.wear.split(':');cosEquip(k,id);SFX.extra('click');draw()});
     };
@@ -20630,10 +20766,13 @@ body.q16pick #table .card.tgt::before{content:"";position:absolute;right:-8px;to
        end. Within a rarity the avatars come last, so the legendary faces close the season (tier 100 is the last one). */
     const P=[];for(let t=1;t<=PASS.tiers;t++)P[t]=null;
     const pav=AVATAR_NEW.filter(a=>a.src==='premium').map(a=>({it:{k:'av',id:a.key},r:RANK[a.rarity]==null?2:RANK[a.rarity],av:1}));
-    const all=prem.map(p=>({...p,av:0})).concat(pav).sort((a,b)=>a.r-b.r||a.av-b.av);
+    /* 17 Nov (laptop q46): the premium cosmetics of their own (backs, titles), between the moved ones and the avatars */
+    const pcos=[];['back','title'].forEach(k=>(window.cosItems?cosItems(k):[]).forEach(x=>{if(x.src!=='premium')return;
+      const it=k==='back'?{k,i:BACKS.findIndex(b=>b.cosId===x.id),id:x.id}:{k,id:x.id};if(k==='back'&&it.i<0)return;pcos.push({it,r:RANK[x.rarity]==null?1:RANK[x.rarity],av:0})}));
+    const all=prem.map(p=>({...p,av:0})).concat(pcos,pav).sort((a,b)=>a.r-b.r||a.av-b.av);
     all.forEach((p,j)=>{let t=Math.round((j+1)*PASS.tiers/all.length);while(t<=PASS.tiers&&P[t])t++;if(t<=PASS.tiers)P[t]=p.it});
     const prows=[];
-    for(let t=1;t<=PASS.tiers;t++){const it=P[t]||{k:'bag',n:Q19.premBag(t)};
+    for(let t=1;t<=PASS.tiers;t++){const it=P[t]||{k:'bag',n:Q19.premBag(t),cp:1};   /* cp: STALL COUPONS (17 Nov): bought Gold would make tables gambling */
       prows.push({tp:t,get t(){return PROF.premium?t:1e9},gold:0,item:it,shop:true,prem:true})}
     return PASS.list=free.concat(rest,prows);
   };
@@ -20659,7 +20798,7 @@ body.q16pick #table .card.tgt::before{content:"";position:absolute;right:-8px;to
     if(G.auto||!PROF.premium)return got;
     const now=passTier(),add=[];PROF.passGotP=PROF.passGotP||0;
     while(PROF.passGotP<now){PROF.passGotP++;const r=premRow(PROF.passGotP);if(!r)break;
-      if(r.item.k==='bag')PROF.gold+=r.item.n;add.push({t:r.tp,gold:0,item:r.item,prem:true})}
+      if(r.item.k==='bag'){if(r.item.cp)PROF.coupons=(PROF.coupons||0)+r.item.n;else PROF.gold+=r.item.n}add.push({t:r.tp,gold:0,item:r.item,prem:true})}
     if(add.length){profSave();G.newTiers=(G.newTiers||[]).concat(add);if(!quiet&&!got.length)setTimeout(()=>SFX.extra('coins'),200)}
     return got.concat(add);
   };
@@ -20676,7 +20815,7 @@ body.q16pick #table .card.tgt::before{content:"";position:absolute;right:-8px;to
 
   /* ---------- 6. the screen: both tracks side by side ---------- */
   const lockImg=()=>`<img class="q19lk" src="${ICON.lock}" alt="locked">`;
-  const goldTxt=(r,it)=>{const g=(r.gold||0)+(it&&it.k==='bag'?it.n:0);return g?`<em>+${g} GOLD</em>`:''};
+  const goldTxt=(r,it)=>{if(it&&it.k==='bag'&&it.cp)return `<em class="q46cp">+${it.n} STALL COUPONS</em>`;const g=(r.gold||0)+(it&&it.k==='bag'?it.n:0);return g?`<em>+${g} GOLD</em>`:''};
   function cell(r,cls,got,locked){
     const it=r.item,ra=it&&it.k!=='bag'?itemRarity(it):'common',bag=!it||it.k==='bag';
     return `<div class="q19c ${cls} r-${ra}${bag?' bag':''}${locked?' locked':''}${got?' got':''}">${itemThumb(it)}<span class="nm">${bag?'':itemName(it)+'<br>'}${goldTxt(r,it)}</span>${locked?lockImg():got?'<i class="tick"></i>':''}</div>`;
@@ -20688,7 +20827,7 @@ body.q16pick #table .card.tgt::before{content:"";position:absolute;right:-8px;to
     <div class="pnow">${avatarHTML(myAvatar(),myHat(),'h',56)}<div><div class="ptier">TIER <b>${t}</b> / ${PASS.tiers}${own?'<span class="q19have">PREMIUM</span>':''}</div>${passBarHTML()}<div class="pxp">${PROF.xp} XP &middot; ${goldHTML(PROF.gold)} GOLD</div></div></div>`;
     if(!own){const nx=P.find(r=>r.tp>t&&r.item.k!=='bag'&&itemRarity(r.item)==='legendary')||P.find(r=>r.item.k!=='bag');
       const have=P.filter(r=>r.tp<=t&&r.item.k!=='bag').length,all=P.filter(r=>r.item.k!=='bag').length;
-      h+=`<div class="q19up">${nx?itemThumb(nx.item):''}<div class="tx"><div class="sl">PREMIUM PASS</div><div class="sn">${all} MORE PRIZES: EPIC AVATARS, BACKS, HATS AND MORE</div><div class="st">${have?have+' ALREADY WAITING FOR YOU':'UNLOCK TO GET THEM AS YOU PLAY'}</div></div><button class="btn y" id="bPremBuy">UNLOCK PREMIUM</button></div>`}
+      h+=`<div class="q19up">${nx?itemThumb(nx.item):''}<div class="tx"><div class="sl">PREMIUM PASS</div><div class="sn">${all} MORE PRIZES: EPIC AVATARS, BACKS, HATS, TITLES AND STALL COUPONS</div><div class="st">${have?have+' ALREADY WAITING FOR YOU':'UNLOCK TO GET THEM AS YOU PLAY'}</div></div><button class="btn y" id="bPremBuy">UNLOCK PREMIUM</button></div>`}
     h+=`<div class="q19hd"><span class="tn">TIER</span><b class="f">FREE</b><b class="p">PREMIUM</b></div><div class="plist q19list" id="plist">`;
     F.forEach(r=>{const got=t>=r.t,next=r.t===t+1,pr=P[r.t-1],big=r.t%10===0;
       h+=`<div class="q19row${got?' got':''}${next?' next':''}${big?' big':''}"${next?' id="pnext"':''}><span class="pt">${r.t}</span>${cell(r,'free',got,!got)}${pr?cell(pr,'prem',got&&own,!own||!got):''}${next?`<span class="q19to">${Math.max(0,passXpAt(r.t)-PROF.xp)} XP</span>`:''}</div>`});
@@ -20704,7 +20843,7 @@ body.q16pick #table .card.tgt::before{content:"";position:absolute;right:-8px;to
   const nt0=newTiersHTML;
   newTiersHTML=function(){const L=G.newTiers||[];if(!L.some(r=>r.prem))return nt0();
     const fr=L.filter(r=>!r.prem),pr=L.filter(r=>r.prem);G.newTiers=fr;let h=nt0();G.newTiers=L;
-    return h+pr.map(r=>`<div class="newtier q19nt">${itemThumb(r.item)}<span>PREMIUM ${r.t}!<br><b>${r.item.k==='bag'?'+'+r.item.n+' GOLD':itemName(r.item)}</b></span></div>`).join('')};
+    return h+pr.map(r=>`<div class="newtier q19nt">${itemThumb(r.item)}<span>PREMIUM ${r.t}!<br><b>${r.item.k==='bag'?'+'+r.item.n+(r.item.cp?' STALL COUPONS':' GOLD'):itemName(r.item)}</b></span></div>`).join('')};
 
   /* the locker: a locked premium thing says where it comes from */
   const ol0=openLocker;
