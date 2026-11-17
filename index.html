@@ -23183,7 +23183,7 @@ renderTitle();fit();
   function aSave(){try{localStorage.removeItem(AKEY);sessionStorage.removeItem(AKEY);if(A)store(A.remember).setItem(AKEY,JSON.stringify(A))}catch(e){}}
   aLoad();
   let guest=false;
-  window.ACC={get email(){return A&&A.email},signedIn:()=>!!A,guest:()=>guest};
+  window.ACC={get email(){return A&&A.email},signedIn:()=>!!A,guest:()=>guest,adminSkip:()=>{guest=true;enter()}};
 
   async function call(path,o){o=o||{};const h={apikey:KEY_,'Content-Type':'application/json',Authorization:'Bearer '+(o.at||KEY_)};
     if(o.prefer)h.Prefer=o.prefer;
@@ -23394,6 +23394,33 @@ renderTitle();fit();
   PASS.list=null;
   const co=window.cosOwned;
   window.cosOwned=function(type,id){if(type==='back'&&id===ID)return passTier()>=100;return co.apply(this,arguments)};
+})();
+
+/* =========================================================================
+   Q38: ADMIN SKIP (17 Nov 2026, Billy, laptop). Only Billy's phones: open the game once with ?admin=<his code> and that
+   device is marked (localStorage 'lockoutAdmin1'); from then on the sign-in board shows a small ADMIN: SKIP that goes
+   straight to the menu without an account. ?admin=off takes the mark away. The page only holds the code's SHA-256,
+   so reading the file doesn't give the code away (it only ever skips sign-in, which is all it can do).
+   ========================================================================= */
+(function(){
+  const HASH='9fe02088c73fc5888f57e8d63148d80726916f9a1c968ce32898a1c62bbc7f68',KEY='lockoutAdmin1';
+  const on=()=>{try{return localStorage.getItem(KEY)==='1'}catch(e){return false}};
+  async function check(){const q=new URLSearchParams(location.search).get('admin');if(!q)return;
+    if(q==='off'){try{localStorage.removeItem(KEY)}catch(e){}}
+    else{try{const h=[...new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(q)))].map(b=>b.toString(16).padStart(2,'0')).join('');
+      if(h===HASH)localStorage.setItem(KEY,'1')}catch(e){}}
+    try{const u=new URL(location.href);u.searchParams.delete('admin');history.replaceState(null,'',u.toString())}catch(e){}
+    paint()}
+  const css=document.createElement('style');
+  css.textContent='.q38{position:absolute;right:8px;top:8px;z-index:20;background:#1a1030;color:#ffb0a0;border:0;box-shadow:0 0 0 2px #ea4a3c;font:9px var(--pix);padding:5px 7px;cursor:pointer}';
+  document.head.appendChild(css);
+  function paint(){const g=document.getElementById('gate');if(!g)return;let b=g.querySelector('.q38');
+    if(!on()||g.hidden||(window.ACC&&ACC.signedIn())){if(b)b.remove();return}
+    if(!b){b=document.createElement('button');b.className='q38';b.dataset.tapstop='1';b.textContent='ADMIN: SKIP';g.appendChild(b);
+      b.addEventListener('pointerdown',e=>e.stopPropagation());
+      b.addEventListener('click',e=>{e.stopPropagation();if(window.ACC&&ACC.adminSkip)ACC.adminSkip()})}}
+  { const sg=showGate;showGate=function(){const r=sg.apply(this,arguments);try{paint()}catch(e){}return r}; }
+  check();
 })();
 
 /* test hook: ?board=N starts a bot match on round N (board N), &opp=1..7 players, &speed */
